@@ -287,8 +287,8 @@ class QuestionAdmin(admin.ModelAdmin):
         headers = ['ID', '问题文本', '问题类型', '分类', '创建者', '是否公开', '创建时间', '选项(格式: 标签1;标签2;标签3)']
         for col_idx, header in enumerate(headers, 1):
             cell = ws.cell(row=1, column=col_idx, value=header)
-            cell.font = header_font
-            cell.alignment = header_alignment
+            cell.font = header_font  # 设置字体为加粗
+            cell.alignment = header_alignment  # 设置居中对齐
         
         # 写入数据
         for row_idx, question in enumerate(queryset.select_related('category', 'created_by').prefetch_related('options'), 2):
