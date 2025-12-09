@@ -1,0 +1,633 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block title %}{{ title }} | {% trans 'Django site admin' %}{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <!-- 引入Chart.js -->
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        /* 统计页面样式 */
+        .statistics-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .survey-header {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+        }
+        
+        .survey-title {
+            font-size: 24px;
+            margin-bottom: 10px;
+            color: #333;
+        }
+        
+        .survey-meta {
+            color: #666;
+            font-size: 14px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .stat-card h3 {
+            margin-top: 0;
+            margin-bottom: 15px;
+            color: #333;
+            font-size: 18px;
+        }
+        
+        .stat-value {
+            font-size: 36px;
+            font-weight: bold;
+            color: #07C160;
+            text-align: center;
+        }
+        
+        .question-section {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+            margin-bottom: 20px;
+        }
+        
+        .question-title {
+            font-size: 16px;
+            font-weight: bold;
+            margin-bottom: 15px;
+            color: #333;
+        }
+        
+        .question-type {
+            font-size: 12px;
+            color: #666;
+            margin-bottom: 10px;
+        }
+        
+        .answer-stat {
+            margin-bottom: 10px;
+        }
+        
+        .answer-label {
+            display: inline-block;
+            width: 200px;
+            font-weight: 500;
+        }
+        
+        .progress-bar {
+            display: inline-block;
+            width: 300px;
+            height: 15px;
+            background: #e9ecef;
+            border-radius: 10px;
+            overflow: hidden;
+            margin: 0 10px;
+            vertical-align: middle;
+        }
+        
+        .progress-fill {
+            height: 100%;
+            background: #07C160;
+            border-radius: 10px;
+            transition: width 0.3s ease;
+        }
+        
+        .answer-count {
+            display: inline-block;
+            width: 60px;
+            text-align: right;
+            font-weight: bold;
+            color: #07C160;
+        }
+        
+        .answer-percentage {
+            display: inline-block;
+            width: 60px;
+            text-align: right;
+            color: #666;
+        }
+        
+        .text-answers {
+            list-style: none;
+            padding: 0;
+        }
+        
+        .text-answer-item {
+            background: #f8f9fa;
+            padding: 10px;
+            border-radius: 4px;
+            margin-bottom: 10px;
+            font-size: 14px;
+        }
+        
+        .text-answer-item .answer-text {
+            color: #333;
+            margin-bottom: 5px;
+        }
+        
+        .text-answer-item .answer-meta {
+            color: #666;
+            font-size: 12px;
+        }
+        
+        .rating-container {
+            display: flex;
+            justify-content: space-around;
+            margin: 20px 0;
+        }
+        
+        .rating-item {
+            text-align: center;
+            flex: 1;
+        }
+        
+        .rating-value {
+            display: block;
+            width: 50px;
+            height: 50px;
+            line-height: 50px;
+            border-radius: 50%;
+            background: #07C160;
+            color: white;
+            font-weight: bold;
+            font-size: 20px;
+            margin: 0 auto 10px;
+        }
+        
+        .rating-count {
+            font-weight: bold;
+            color: #333;
+        }
+        
+        .rating-percentage {
+            font-size: 12px;
+            color: #666;
+        }
+        
+        /* 图表容器样式 */
+        .chart-container {
+            position: relative;
+            height: 400px;
+            margin: 20px 0;
+        }
+        
+        .chart-tabs {
+            margin: 15px 0;
+        }
+        
+        .chart-tabs button {
+            margin-right: 10px;
+            padding: 5px 15px;
+            background: #e9ecef;
+            border: 1px solid #dee2e6;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .chart-tabs button.active {
+            background: #07C160;
+            color: white;
+            border-color: #07C160;
+        }
+        
+        /* 导出按钮样式 */
+        .export-section {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .export-section h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #1565c0;
+        }
+        
+        .export-buttons {
+            margin-top: 10px;
+        }
+        
+        .export-buttons button {
+            margin-right: 10px;
+        }
+    </style>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-form{% endblock %}
+
+{% block content_title %}{{ title }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'change' survey.pk|admin_urlquote %}">{{ survey.title }}</a>
+&rsaquo; {% trans 'Statistics' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div class="statistics-container">
+        <!-- 问卷基本信息 -->
+        <div class="survey-header">
+            <h1 class="survey-title">{{ survey.title }}</h1>
+            <div class="survey-meta">
+                <p>{% trans 'Created by' %}: {{ survey.created_by }} | {% trans 'Created at' %}: {{ survey.created_at }}</p>
+                {% if survey.description %}
+                <p>{{ survey.description }}</p>
+                {% endif %}
+            </div>
+        </div>
+        
+        <!-- 总体统计 -->
+        <div class="stat-card">
+            <h3>{% trans 'Overall Statistics' %}</h3>
+            <div style="display: flex; justify-content: space-around;">
+                <div>
+                    <div class="stat-value">{{ total_responses }}</div>
+                    <div style="text-align: center; color: #666;">{% trans 'Total Responses' %}</div>
+                </div>
+                <div>
+                    <div class="stat-value">{{ questions|length }}</div>
+                    <div style="text-align: center; color: #666;">{% trans 'Total Questions' %}</div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- 问题统计 -->
+        {% for q in questions %}
+        <div class="question-section">
+            <h3 class="question-title">{{ forloop.counter }}. {{ q.question.text }}</h3>
+            <div class="question-type">{{ q.question.get_question_type_display }}</div>
+            
+            <div style="margin-top: 15px;">
+                <strong>{% trans 'Answers' %}:</strong> {{ q.answer_count }}
+            </div>
+            
+            {% if q.type in 'single_choice,multiple_choice' %}
+                <!-- 选择题统计 -->
+                {% if q.data %}
+                    <!-- 图表切换标签 -->
+                    <div class="chart-tabs">
+                        <button class="active" data-chart-type="bar" data-question-id="{{ q.question.id }}">柱状图</button>
+                        <button data-chart-type="pie" data-question-id="{{ q.question.id }}">饼图</button>
+                        <button data-chart-type="doughnut" data-question-id="{{ q.question.id }}">环形图</button>
+                    </div>
+                    
+                    <!-- 图表容器 -->
+                    <div class="chart-container">
+                        <canvas id="chart-{{ q.question.id }}"></canvas>
+                    </div>
+                    
+                    <!-- 传统统计表格 -->
+                    <div style="margin-top: 20px;">
+                        <strong>详细统计：</strong>
+                        {% for option_value, option_data in q.data.items %}
+                            <div class="answer-stat">
+                                <span class="answer-label">{{ option_data.label }}</span>
+                                <div class="progress-bar">
+                                    <div class="progress-fill" style="width: {{ option_data.percentage }}%"></div>
+                                </div>
+                                <span class="answer-count">{{ option_data.count }}</span>
+                                <span class="answer-percentage">({{ option_data.percentage|floatformat:1 }}%)</span>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>{% trans 'No answers yet' %}</p>
+                {% endif %}
+            {% elif q.type == 'rating' %}
+                <!-- 评分题统计 -->
+                {% if q.data %}
+                    <!-- 图表切换标签 -->
+                    <div class="chart-tabs">
+                        <button class="active" data-chart-type="bar" data-question-id="{{ q.question.id }}">柱状图</button>
+                        <button data-chart-type="line" data-question-id="{{ q.question.id }}">折线图</button>
+                        <button data-chart-type="radar" data-question-id="{{ q.question.id }}">雷达图</button>
+                    </div>
+                    
+                    <!-- 图表容器 -->
+                    <div class="chart-container">
+                        <canvas id="chart-{{ q.question.id }}"></canvas>
+                    </div>
+                    
+                    <!-- 传统评分展示 -->
+                    <div class="rating-container">
+                        {% for rating, rating_data in q.data.items %}
+                            <div class="rating-item">
+                                <div class="rating-value">{{ rating }}</div>
+                                <div class="rating-count">{{ rating_data.count }}</div>
+                                <div class="rating-percentage">{{ rating_data.percentage|floatformat:1 }}%</div>
+                            </div>
+                        {% endfor %}
+                    </div>
+                {% else %}
+                    <p>{% trans 'No answers yet' %}</p>
+                {% endif %}
+            {% elif q.type == 'text' %}
+                <!-- 文本题统计 -->
+                {% if q.data %}
+                    <ul class="text-answers">
+                        {% for answer in q.data %}
+                            <li class="text-answer-item">
+                                <div class="answer-text">{{ answer }}</div>
+                            </li>
+                        {% endfor %}
+                    </ul>
+                    {% if q.answer_count > 10 %}
+                        <p style="color: #666; font-size: 14px;">
+                            {% trans 'Showing first 10 answers of' %} {{ q.answer_count }}
+                        </p>
+                    {% endif %}
+                {% else %}
+                    <p>{% trans 'No answers yet' %}</p>
+                {% endif %}
+            {% else %}
+                <p>{% trans 'Unknown question type' %}</p>
+            {% endif %}
+        </div>
+        {% endfor %}
+        
+        <!-- 返回按钮 -->
+        <div style="margin-top: 30px; text-align: right;">
+            <a href="{% url opts|admin_urlname:'change' survey.pk|admin_urlquote %}" class="button">{% trans 'Back to Survey' %}</a>
+            <a href="{% url opts|admin_urlname:'changelist' %}" class="button">{% trans 'Back to List' %}</a>
+        </div>
+    </div>
+</div>
+
+<!-- 图表初始化脚本 -->
+<script>
+    // 存储所有图表实例
+    const charts = {};
+    
+    // 页面加载完成后初始化图表
+    document.addEventListener('DOMContentLoaded', function() {
+        initAllCharts();
+        setupChartTabs();
+    });
+    
+    // 初始化所有图表
+    function initAllCharts() {
+        {% for q in questions %}
+            {% if q.type in 'single_choice,multiple_choice,rating' %}
+                {% if q.data %}
+                    // 准备图表数据
+                    const labels = [];
+                    const data = [];
+                    
+                    {% if q.type in 'single_choice,multiple_choice' %}
+                        // 选择题数据
+                        {% for option_value, option_data in q.data.items %}
+                            labels.push('{{ option_data.label|escapejs }}');
+                            data.push({{ option_data.count }});
+                        {% endfor %}
+                    {% elif q.type == 'rating' %}
+                        // 评分题数据
+                        {% for rating, rating_data in q.data.items %}
+                            labels.push('{{ rating }}');
+                            data.push({{ rating_data.count }});
+                        {% endfor %}
+                    {% endif %}
+                    
+                    // 初始化图表
+                    initChart('{{ q.question.id }}', 'bar', labels, data, '{{ q.question.text|escapejs }}');
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+    }
+    
+    // 初始化单个图表
+    function initChart(questionId, chartType, labels, data, title) {
+        const canvas = document.getElementById(`chart-${questionId}`);
+        if (!canvas) return;
+        
+        // 销毁现有图表实例
+        if (charts[questionId]) {
+            charts[questionId].destroy();
+        }
+        
+        // 设置图表配置
+        const ctx = canvas.getContext('2d');
+        
+        // 生成随机颜色
+        const backgroundColors = generateColors(labels.length);
+        const borderColors = backgroundColors.map(color => darkenColor(color, 0.2));
+        
+        const config = {
+            type: chartType,
+            data: {
+                labels: labels,
+                datasets: [{
+                    label: title,
+                    data: data,
+                    backgroundColor: backgroundColors,
+                    borderColor: borderColors,
+                    borderWidth: 1
+                }]
+            },
+            options: {
+                responsive: true,
+                maintainAspectRatio: false,
+                plugins: {
+                    title: {
+                        display: true,
+                        text: title
+                    },
+                    legend: {
+                        display: chartType === 'pie' || chartType === 'doughnut'
+                    },
+                    tooltip: {
+                        callbacks: {
+                            label: function(context) {
+                                let label = context.label || '';
+                                if (label) {
+                                    label += ': ';
+                                }
+                                
+                                // 处理不同类型图表的数据结构
+                                let value;
+                                if (chartType === 'pie' || chartType === 'doughnut') {
+                                    value = context.parsed;
+                                } else {
+                                    value = context.parsed.y;
+                                }
+                                
+                                if (value !== null && value !== undefined) {
+                                    const total = context.dataset.data.reduce((sum, v) => sum + v, 0);
+                                    const percentage = ((value / total) * 100).toFixed(1);
+                                    label += value + ` (${percentage}%)`;
+                                }
+                                return label;
+                            }
+                        }
+                    }
+                },
+                scales: chartType !== 'pie' && chartType !== 'doughnut' && chartType !== 'radar' ? {
+                    y: {
+                        beginAtZero: true,
+                        title: {
+                            display: true,
+                            text: '回答数量'
+                        },
+                        ticks: {
+                            stepSize: 1
+                        }
+                    },
+                    x: {
+                        title: {
+                            display: true,
+                            text: '选项'
+                        }
+                    }
+                } : {}
+            }
+        };
+        
+        // 创建图表实例
+        charts[questionId] = new Chart(ctx, config);
+    }
+    
+    // 设置图表标签切换事件
+    function setupChartTabs() {
+        const tabButtons = document.querySelectorAll('.chart-tabs button');
+        
+        tabButtons.forEach(button => {
+            button.addEventListener('click', function() {
+                const questionId = this.dataset.questionId;
+                const chartType = this.dataset.chartType;
+                
+                // 更新按钮状态
+                this.parentElement.querySelectorAll('button').forEach(btn => {
+                    btn.classList.remove('active');
+                });
+                this.classList.add('active');
+                
+                // 重新初始化图表
+                updateChart(questionId, chartType);
+            });
+        });
+    }
+    
+    // 更新图表类型
+    function updateChart(questionId, chartType) {
+        // 获取当前问题的图表数据
+        const canvas = document.getElementById(`chart-${questionId}`);
+        if (!canvas || !charts[questionId]) return;
+        
+        const chart = charts[questionId];
+        const labels = chart.data.labels;
+        const data = chart.data.datasets[0].data;
+        const title = chart.data.datasets[0].label;
+        
+        // 重新初始化图表
+        initChart(questionId, chartType, labels, data, title);
+    }
+    
+    // 生成随机颜色数组
+    function generateColors(count) {
+        const colors = [];
+        for (let i = 0; i < count; i++) {
+            colors.push(`rgba(${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, ${Math.floor(Math.random() * 255)}, 0.8)`);
+        }
+        return colors;
+    }
+    
+    // 加深颜色
+    function darkenColor(color, factor) {
+        const rgba = color.match(/\d+/g).map(Number);
+        return `rgba(${Math.floor(rgba[0] * (1 - factor))}, ${Math.floor(rgba[1] * (1 - factor))}, ${Math.floor(rgba[2] * (1 - factor))}, ${rgba[3]})`;
+    }
+    
+    // 导出图表为图片
+    function exportChart(questionId, format) {
+        const chart = charts[questionId];
+        if (!chart) return;
+        
+        let url;
+        if (format === 'png') {
+            url = chart.toBase64Image();
+        } else if (format === 'svg') {
+            // SVG导出需要额外的库支持
+            alert('SVG导出功能正在开发中，请使用PNG格式导出。');
+            return;
+        }
+        
+        // 创建下载链接
+        const link = document.createElement('a');
+        link.href = url;
+        link.download = `chart-${questionId}.${format}`;
+        link.click();
+    }
+    
+    // 导出所有图表
+    function exportAllCharts() {
+        alert('导出所有图表功能正在开发中。');
+    }
+    
+    // 导出数据为CSV
+    function exportDataAsCSV() {
+        let csvContent = 'data:text/csv;charset=utf-8,';
+        
+        // 添加表头
+        csvContent += '问题,选项,数量,百分比\n';
+        
+        // 添加数据
+        {% for q in questions %}
+            {% if q.type in 'single_choice,multiple_choice' %}
+                {% if q.data %}
+                    {% for option_value, option_data in q.data.items %}
+                        csvContent += '{{ q.question.text|escapejs }}';
+                        csvContent += ',{{ option_data.label|escapejs }}';
+                        csvContent += ',{{ option_data.count }}';
+                        csvContent += ',{{ option_data.percentage|floatformat:1 }}%\n';
+                    {% endfor %}
+                {% endif %}
+            {% elif q.type == 'rating' %}
+                {% if q.data %}
+                    {% for rating, rating_data in q.data.items %}
+                        csvContent += '{{ q.question.text|escapejs }}';
+                        csvContent += ',{{ rating }}';
+                        csvContent += ',{{ rating_data.count }}';
+                        csvContent += ',{{ rating_data.percentage|floatformat:1 }}%\n';
+                    {% endfor %}
+                {% endif %}
+            {% elif q.type == 'text' %}
+                {% if q.data %}
+                    {% for answer in q.data %}
+                        csvContent += '{{ q.question.text|escapejs }}';
+                        csvContent += ',{{ answer|escapejs }}';
+                        csvContent += ',1,100%\n';
+                    {% endfor %}
+                {% endif %}
+            {% endif %}
+        {% endfor %}
+        
+        // 创建下载链接
+        const encodedUri = encodeURI(csvContent);
+        const link = document.createElement('a');
+        link.href = encodedUri;
+        link.download = 'survey-statistics.csv';
+        link.click();
+    }
+</script>
+
+{% endblock %}

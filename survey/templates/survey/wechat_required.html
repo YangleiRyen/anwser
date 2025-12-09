@@ -1,0 +1,305 @@
+<!-- templates/survey/wechat_required.html -->
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>请在微信中打开</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            min-height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 20px;
+        }
+        
+        .container {
+            background: white;
+            border-radius: 20px;
+            padding: 40px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            max-width: 500px;
+            width: 100%;
+            text-align: center;
+        }
+        
+        .wechat-icon {
+            width: 100px;
+            height: 100px;
+            background: #07C160;
+            border-radius: 50%;
+            margin: 0 auto 30px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 50px;
+        }
+        
+        h1 {
+            color: #333;
+            margin-bottom: 20px;
+            font-size: 28px;
+        }
+        
+        .message {
+            color: #666;
+            line-height: 1.6;
+            margin-bottom: 30px;
+            font-size: 16px;
+        }
+        
+        .qr-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .qr-code {
+            width: 200px;
+            height: 200px;
+            margin: 0 auto;
+            background: white;
+            padding: 10px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0,0,0,0.1);
+        }
+        
+        .qr-code img {
+            width: 100%;
+            height: 100%;
+            object-fit: contain;
+        }
+        
+        .steps {
+            text-align: left;
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+        }
+        
+        .step {
+            display: flex;
+            align-items: flex-start;
+            margin-bottom: 15px;
+        }
+        
+        .step-number {
+            background: #07C160;
+            color: white;
+            width: 24px;
+            height: 24px;
+            border-radius: 50%;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 14px;
+            margin-right: 10px;
+            flex-shrink: 0;
+        }
+        
+        .step-text {
+            color: #333;
+            line-height: 1.5;
+        }
+        
+        .survey-info {
+            background: #e8f5e9;
+            padding: 15px;
+            border-radius: 10px;
+            margin: 20px 0;
+            text-align: left;
+        }
+        
+        .survey-info h3 {
+            color: #2e7d32;
+            margin-bottom: 10px;
+            font-size: 18px;
+        }
+        
+        .survey-info p {
+            color: #555;
+            margin-bottom: 5px;
+        }
+        
+        .actions {
+            display: flex;
+            gap: 15px;
+            margin-top: 30px;
+        }
+        
+        .btn {
+            flex: 1;
+            padding: 15px;
+            border: none;
+            border-radius: 10px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            text-decoration: none;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+        
+        .btn-primary {
+            background: #07C160;
+            color: white;
+        }
+        
+        .btn-primary:hover {
+            background: #05a050;
+            transform: translateY(-2px);
+            box-shadow: 0 5px 15px rgba(7, 193, 96, 0.3);
+        }
+        
+        .btn-secondary {
+            background: #f8f9fa;
+            color: #333;
+            border: 2px solid #e0e0e0;
+        }
+        
+        .btn-secondary:hover {
+            background: #e9ecef;
+            transform: translateY(-2px);
+        }
+        
+        .btn-icon {
+            font-size: 20px;
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .wechat-icon {
+                width: 80px;
+                height: 80px;
+                font-size: 40px;
+            }
+            
+            h1 {
+                font-size: 24px;
+            }
+            
+            .actions {
+                flex-direction: column;
+            }
+            
+            .qr-code {
+                width: 150px;
+                height: 150px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="wechat-icon">
+            <span>W</span>
+        </div>
+        
+        <h1>请在微信中打开</h1>
+        
+        <div class="message">
+            此问卷需要在微信中填写，请使用微信扫描下方二维码
+        </div>
+        
+        {% if survey %}
+        <div class="survey-info">
+            <h3>问卷信息</h3>
+            <p><strong>问卷名称：</strong>{{ survey.title }}</p>
+            {% if survey.description %}
+            <p><strong>问卷描述：</strong>{{ survey.description }}</p>
+            {% endif %}
+            <p><strong>创建时间：</strong>{{ survey.created_at|date:"Y-m-d H:i" }}</p>
+        </div>
+        {% endif %}
+        
+        <div class="qr-container">
+            <div class="qr-code">
+                {% if qrcode %}
+                <!-- 这里可以显示二维码图片 -->
+                <img src="https://api.qrserver.com/v1/create-qr-code/?size=200x200&data={{ request.build_absolute_uri }}" 
+                     alt="微信扫码二维码">
+                {% endif %}
+            </div>
+        </div>
+        
+        <div class="steps">
+            <div class="step">
+                <div class="step-number">1</div>
+                <div class="step-text">打开微信，点击右上角的"+"号</div>
+            </div>
+            <div class="step">
+                <div class="step-number">2</div>
+                <div class="step-text">选择"扫一扫"功能</div>
+            </div>
+            <div class="step">
+                <div class="step-number">3</div>
+                <div class="step-text">扫描上方二维码</div>
+            </div>
+            <div class="step">
+                <div class="step-number">4</div>
+                <div class="step-text">在微信中填写问卷</div>
+            </div>
+        </div>
+        
+        <div class="actions">
+            <a href="weixin://" class="btn btn-primary">
+                <span class="btn-icon">📱</span>
+                <span>打开微信</span>
+            </a>
+            <button onclick="copyLink()" class="btn btn-secondary">
+                <span class="btn-icon">🔗</span>
+                <span>复制链接</span>
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        function copyLink() {
+            const url = window.location.href;
+            navigator.clipboard.writeText(url).then(() => {
+                alert('链接已复制到剪贴板！');
+            }).catch(err => {
+                // 兼容旧版浏览器
+                const textArea = document.createElement('textarea');
+                textArea.value = url;
+                document.body.appendChild(textArea);
+                textArea.select();
+                document.execCommand('copy');
+                document.body.removeChild(textArea);
+                alert('链接已复制到剪贴板！');
+            });
+        }
+        
+        // 自动检测是否为微信浏览器
+        function isWeChatBrowser() {
+            const ua = navigator.userAgent.toLowerCase();
+            return ua.indexOf('micromessenger') !== -1;
+        }
+        
+        // 如果是微信浏览器，自动刷新页面
+        if (isWeChatBrowser()) {
+            setTimeout(() => {
+                window.location.reload();
+            }, 1000);
+        }
+    </script>
+</body>
+</html>

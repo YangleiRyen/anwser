@@ -1,0 +1,139 @@
+{% extends "admin/base_site.html" %}
+{% load i18n admin_urls static admin_list %}
+
+{% block title %}{{ title }} | {% trans 'Django site admin' %}{% endblock %}
+
+{% block extrahead %}
+    {{ block.super }}
+    <style>
+        .import-questions-container {
+            margin: 20px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 8px;
+        }
+        
+        .form-group {
+            margin: 15px 0;
+        }
+        
+        .form-group label {
+            display: block;
+            margin-bottom: 5px;
+            font-weight: bold;
+        }
+        
+        .form-group input[type="file"] {
+            margin: 5px 0;
+        }
+        
+        .form-actions {
+            margin-top: 20px;
+            text-align: right;
+        }
+        
+        .btn-primary {
+            background: #07C160;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+        }
+        
+        .btn-primary:hover {
+            background: #06b556;
+        }
+        
+        .btn-secondary {
+            background: #19a3a5ff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 4px;
+            cursor: pointer;
+            margin-right: 10px;
+        }
+        
+        .btn-secondary:hover {
+            background: #5a6268;
+        }
+        
+        .template-info {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e3f2fd;
+            border-radius: 8px;
+            border-left: 4px solid #2196f3;
+        }
+        
+        .template-info h4 {
+            margin-top: 0;
+            margin-bottom: 10px;
+            color: #1565c0;
+        }
+    </style>
+{% endblock %}
+
+{% block bodyclass %}{{ block.super }} app-{{ opts.app_label }} model-{{ opts.model_name }} change-form{% endblock %}
+
+{% block content_title %}{{ title }}{% endblock %}
+
+{% block breadcrumbs %}
+<div class="breadcrumbs">
+<a href="{% url 'admin:index' %}">{% trans 'Home' %}</a>
+&rsaquo; <a href="{% url 'admin:app_list' app_label=opts.app_label %}">{{ opts.app_config.verbose_name }}</a>
+&rsaquo; <a href="{% url opts|admin_urlname:'changelist' %}">{{ opts.verbose_name_plural|capfirst }}</a>
+&rsaquo; {% trans 'Import Questions' %}
+</div>
+{% endblock %}
+
+{% block content %}
+<div id="content-main">
+    <div class="import-questions-container">
+        <h2>导入问题</h2>
+        <p>从CSV或Excel文件导入问题到问题库：</p>
+        
+        <div class="template-info">
+            <h4>文件格式说明：</h4>
+            <ul>
+                <li>支持格式：CSV、Excel (.xls, .xlsx)</li>
+                <li>必须包含以下列：<strong>问题文本</strong>、<strong>问题类型</strong>、<strong>分类</strong>、<strong>是否必填</strong></li>
+                <li>问题类型支持：文本题、单选题、多选题、评分题、日期题</li>
+                <li>分类列可以为空，为空则不设置分类</li>
+                <li>是否必填：是/否</li>
+                <li>建议先下载模板，按照模板格式填写数据</li>
+            </ul>
+            <a href="{% url 'admin:survey_question_export_template' %}?format=csv" class="btn-secondary" style="margin-top: 10px; margin-right: 10px; display: inline-block;">
+                下载CSV模板
+            </a>
+            <a href="{% url 'admin:survey_question_export_template' %}?format=excel" class="btn-secondary" style="margin-top: 10px; display: inline-block;">
+                下载Excel模板
+            </a>
+        </div>
+        
+        <form method="post" enctype="multipart/form-data">
+            {% csrf_token %}
+            
+            <div class="form-group">
+                {{ form.file.label_tag }}
+                {{ form.file }}
+            </div>
+            
+            <div class="form-group">
+                {{ form.is_public.label_tag }}
+                {{ form.is_public }}
+            </div>
+            
+            <div class="form-actions">
+                <a href="{% url opts|admin_urlname:'changelist' %}" class="btn-secondary">
+                    取消
+                </a>
+                <button type="submit" class="btn-primary">
+                    导入
+                </button>
+            </div>
+        </form>
+    </div>
+</div>
+{% endblock %}

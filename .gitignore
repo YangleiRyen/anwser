@@ -1,0 +1,48 @@
+# Django项目.gitignore文件
+
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Django
+local_settings.py
+media/
+staticfiles/
+*.sqlite3
+*.db
+
+# 环境变量
+.env
+.env.local
+.env.*.local
+
+# 日志
+*.log
+django-debug.log*
+
+# IDE
+.idea/
+.vscode/
+*.swp
+*.swo
+*~
+
+# 操作系统
+Thumbs.db
+.DS_Store
+
+# 虚拟环境
+venv/
+env/
+.env/
+
+# 测试
+.coverage
+htmlcov/
+.tox/
+
+# 其他
+*.bak
+*.tmp
+.cache/
