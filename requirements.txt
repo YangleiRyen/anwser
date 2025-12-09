@@ -1,0 +1,11 @@
+# WeChat Survey Project Dependencies
+Django==5.2
+djangorestframework==3.16.1
+qrcode==8.2
+requests==2.32.5
+pillow==12.0.0
+openpyxl==3.1.5
+asgiref==3.11.0
+sqlparse==0.5.4
+urllib3==2.5.0
+certifi==2025.11.12
