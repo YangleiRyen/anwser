@@ -37,7 +37,7 @@ Thumbs.db
 venv/
 env/
 .env/
-.venv/
+
 
 # 测试
 .coverage
