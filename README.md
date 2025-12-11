@@ -9,12 +9,26 @@
 | --- | --- |
 | `wechat_survey/` | 项目主目录，包含Django项目配置 |
 | `survey/` | 问卷应用目录，包含所有业务逻辑 |
+| `nginx/` | Nginx配置目录，包含反向代理和静态文件服务配置 |
+| `.git` | Git版本控制目录，存储项目的Git仓库信息 |
+| `.venv` | Python虚拟环境目录，存储项目的Python虚拟环境 |
+| `.gitignore` | Git忽略文件配置，指定Git需要忽略的文件和目录 |
+| `requirements.txt` | Python依赖列表，包含项目所需的所有Python依赖包 |
 | `Dockerfile` | Docker镜像构建文件，定义了应用的运行环境 |
 | `docker-compose.yml` | Docker Compose配置文件，定义了多容器部署方案 |
-| `nginx/` | Nginx配置目录，包含反向代理和静态文件服务配置 |
 | `deploy.sh` | 部署脚本，用于简化Docker容器的管理和操作 |
-| `requirements.txt` | Python依赖列表，包含项目所需的所有第三方包 |
+| `DEPLOYMENT.md` | 部署文档，详细说明项目的Docker部署步骤 |
 | `manage.py` | Django项目管理脚本，用于执行各种Django命令 |
+| `create_initial_categories.py` | 初始分类创建脚本，用于创建系统初始的问题分类 |
+| `create_test_survey.py` | 测试问卷创建脚本，用于创建测试问卷数据 |
+| `drop_category_table.py` | 分类表删除脚本，用于删除分类表 |
+| `manage_qrcodes.py` | 二维码管理脚本，用于生成和管理问卷的二维码 |
+| `test_import.py` | 导入测试脚本，测试数据导入功能 |
+| `test_qrcode.py` | 二维码测试脚本，测试二维码生成和扫描功能 |
+| `test_survey_display.py` | 问卷展示测试脚本，测试问卷页面的展示效果 |
+| `test_survey_submit.py` | 问卷提交测试脚本，测试问卷提交功能 |
+| `db.sqlite3` | SQLite数据库文件，存储所有数据（开发环境使用） |
+| `qrcode_*.png` | 生成的二维码图片，用于扫码填写问卷 |
 
 ### 项目主目录（wechat_survey）
 | 文件 | 作用 |
@@ -73,7 +87,6 @@
 | `survey.py` | 包含问卷相关视图，如SurveyDetailView和SubmitSurveyView |
 | `qrcode.py` | 包含二维码相关视图，如QRCodeRedirectView和QRCodeImageView |
 | `wechat.py` | 包含微信相关视图，如WeChatAuthView和WeChatCallbackView |
-| `views.py` | 原始views.py文件，现在只包含导入语句：`from .views import *` |
 
 ### serializers目录
 | 文件 | 作用 |
@@ -84,7 +97,6 @@
 | `answer_serializer.py` | 包含AnswerSerializer，用于序列化Answer模型 |
 | `response_serializer.py` | 包含ResponseSerializer，用于序列化Response模型 |
 | `qrcode_serializer.py` | 包含QRCodeSerializer，用于序列化QRCode模型 |
-| `serializers.py` | 原始serializers.py文件，现在只包含导入语句：`from .serializers import *` |
 
 ### services目录
 | 文件 | 作用 |
@@ -101,12 +113,53 @@
 | --- | --- |
 | `nginx.conf` | Nginx配置文件，包含静态文件服务、媒体文件服务和Django应用代理配置 |
 
-### 部署相关文件
-| 文件 | 作用 |
-| --- | --- |
-| `Dockerfile` | 定义了Docker镜像的构建步骤，包括安装依赖、复制文件、收集静态文件等 |
-| `docker-compose.yml` | 定义了多容器部署方案，包括web服务（Django应用）、db服务（PostgreSQL数据库）和nginx服务（反向代理） |
-| `deploy.sh` | 部署脚本，提供了简化的命令行接口，用于管理Docker容器的构建、启动、停止、日志查看等操作 |
+## 项目根目录文件详解
+
+### 1. 目录
+
+- **.git**: Git版本控制目录，存储项目的Git仓库信息，包括提交历史、分支、标签等
+- **.venv**: Python虚拟环境目录，存储项目的Python虚拟环境，包括安装的依赖包
+- **nginx**: Nginx配置目录，存储Nginx的配置文件，用于反向代理和静态文件服务
+- **survey**: 问卷应用目录，项目的核心应用，包含所有业务逻辑（模型、视图、序列化器等）
+- **wechat_survey**: 项目主目录，Django项目的主目录，包含项目配置、URL路由、WSGI入口等
+
+### 2. 配置文件
+
+- **.gitignore**: Git忽略文件配置，指定Git版本控制中需要忽略的文件和目录，如虚拟环境、日志文件等
+- **requirements.txt**: Python依赖列表，列出项目所需的所有Python依赖包及其版本，用于安装依赖
+- **Dockerfile**: Docker镜像构建文件，定义Docker镜像的构建步骤，包括基础镜像、依赖安装、文件复制等
+- **docker-compose.yml**: Docker Compose配置，定义多容器部署方案，包括web、db、nginx三个服务的配置
+
+### 3. 部署相关
+
+- **deploy.sh**: 部署脚本，简化Docker容器的管理和操作，提供deploy、stop、logs等命令
+- **DEPLOYMENT.md**: 部署文档，详细说明项目的Docker部署步骤、配置和常用命令
+
+### 4. Django管理文件
+
+- **manage.py**: Django项目管理脚本，用于执行各种Django命令，如创建应用、数据库迁移、启动开发服务器等
+
+### 5. 脚本文件
+
+- **create_initial_categories.py**: 初始分类创建脚本，用于创建系统初始的问题分类
+- **create_test_survey.py**: 测试问卷创建脚本，用于创建测试问卷数据，方便开发和测试
+- **drop_category_table.py**: 分类表删除脚本，用于删除分类表，通常用于数据库结构调整
+- **manage_qrcodes.py**: 二维码管理脚本，用于生成和管理问卷的二维码
+
+### 6. 测试文件
+
+- **test_import.py**: 导入测试脚本，测试数据导入功能
+- **test_qrcode.py**: 二维码测试脚本，测试二维码生成和扫描功能
+- **test_survey_display.py**: 问卷展示测试脚本，测试问卷页面的展示效果
+- **test_survey_submit.py**: 问卷提交测试脚本，测试问卷提交功能
+
+### 7. 数据库文件
+
+- **db.sqlite3**: SQLite数据库文件，项目的SQLite数据库文件，存储所有数据（开发环境使用）
+
+### 8. 其他文件
+
+- **qrcode_*.png**: 生成的二维码图片，系统生成的问卷二维码图片，用于扫码填写问卷
 
 ## 部署说明
 
@@ -200,12 +253,13 @@
 
 ## 技术栈
 
-- **后端框架**：Django 4.x
-- **API框架**：Django REST Framework
-- **数据库**：PostgreSQL
+- **后端框架**：Django 5.2
+- **API框架**：Django REST Framework 3.16.1
+- **数据库**：PostgreSQL 15+ / SQLite
 - **前端**：HTML, CSS, JavaScript
 - **容器化**：Docker, Docker Compose
 - **反向代理**：Nginx
+- **应用服务器**：uWSGI 2.0.25
 
 ## 项目状态
 

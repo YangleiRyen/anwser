@@ -31,5 +31,5 @@ ENV PYTHONUNBUFFERED 1
 # 暴露端口
 EXPOSE 8000
 
-# 运行命令
-CMD ["python", "manage.py", "runserver", "0.0.0.0:8000"]
+# 运行命令 - 使用uwsgi
+CMD ["uwsgi", "--http-socket", "0.0.0.0:8000", "--module", "wechat_survey.wsgi:application", "--workers", "4", "--threads", "2", "--master", "--vacuum"]

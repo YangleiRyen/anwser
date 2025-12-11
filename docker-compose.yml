@@ -19,7 +19,7 @@ services:
     depends_on:
       - db
     command: >
-      sh -c "python manage.py migrate && python manage.py runserver 0.0.0.0:8000"
+      sh -c "python manage.py migrate && uwsgi --http-socket 0.0.0.0:8000 --module wechat_survey.wsgi:application --workers 4 --threads 2 --master --vacuum"
 
   # PostgreSQL数据库服务
   db:
