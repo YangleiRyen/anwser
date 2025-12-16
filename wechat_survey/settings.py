@@ -121,10 +121,20 @@ USE_TZ = True
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
 # === 以下是微信问卷系统的额外配置 ===
+import os
+from django.core.exceptions import ImproperlyConfigured
+
+def get_env_variable(var_name):
+    """获取环境变量，如果不存在则抛出异常"""
+    try:
+        return os.environ[var_name]
+    except KeyError:
+        error_msg = f"请设置 {var_name} 环境变量"
+        raise ImproperlyConfigured(error_msg)
 
 # 微信配置（需要在环境变量中设置）
-WECHAT_APP_ID = os.environ.get('WECHAT_APP_ID', 'wxaae74213efd7c09a')
-WECHAT_APP_SECRET = os.environ.get('WECHAT_APP_SECRET', 'fc047e4a209b9f3dc598ecf9415615d3')
+WECHAT_APP_ID = os.environ.get('WECHAT_APP_ID')
+WECHAT_APP_SECRET = os.environ.get('WECHAT_APP_SECRET')
 
 # 静态文件配置
 STATIC_URL = '/static/'
