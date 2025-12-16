@@ -23,26 +23,23 @@ class SurveyQuestionInline(admin.TabularInline):
     
     def formfield_for_foreignkey(self, db_field, request, **kwargs):
         """优化问题选择框"""
-        if db_field.name == 'question':
-            # 预加载相关数据以提高性能，只显示激活分类的问题
-            kwargs['queryset'] = kwargs['queryset'].filter(
-                (Q(category__is_active=True) | Q(category__isnull=True))
-            ).select_related('category').order_by('category__name', 'text')
+
+        # 安全地获取 queryset
+        queryset = kwargs.get('queryset')
         
-        # 先调用父类方法获取表单字段
-        form_field = super().formfield_for_foreignkey(db_field, request, **kwargs)
-        
-        # 然后设置自定义的label_from_instance
-        if db_field.name == 'question':
-            def label_from_instance(obj):
-                category_name = obj.category.name if obj.category else '未分类'
-                type_display = obj.get_question_type_display()
-                text_preview = obj.text[:50] + '...' if len(obj.text) > 50 else obj.text
-                return f"[{category_name}] {text_preview} ({type_display})"
+        # 为特定字段过滤 queryset
+        if db_field.name == "your_field_name":  # 替换为实际字段名
+            # 如果 kwargs 中没有 queryset，则从模型获取
+            if queryset is None:
+                queryset = db_field.remote_field.model.objects.all()
             
-            form_field.label_from_instance = label_from_instance
+            # 过滤 queryset
+            queryset = queryset.filter(your_filter_condition=True)
+            
+            # 更新 kwargs
+            kwargs['queryset'] = queryset
         
-        return form_field
+        return super().formfield_for_foreignkey(db_field, request, **kwargs)
 
 
 @admin.register(Survey)

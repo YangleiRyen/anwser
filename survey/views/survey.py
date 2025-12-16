@@ -1,4 +1,5 @@
 # survey/views/survey.py
+import time
 from datetime import datetime
 from django.shortcuts import render, get_object_or_404, redirect
 from django.http import JsonResponse, HttpResponseRedirect
