@@ -171,98 +171,56 @@ standalone_nginx/
 
 ## 部署说明
 
-### 使用Docker部署（nginx + uwsgi分离模式）
+### 一键部署（推荐）
 
 #### 1. 部署前准备
-```bash
-# 创建共享网络（多应用部署必需）
-docker network create wechat_survey_network
+- 确保已安装Docker和Docker Compose
+- 克隆项目代码到本地
 
-# 创建共享卷
-docker volume create static_volume
-docker volume create media_volume
-docker volume create postgres_data
+#### 2. 执行一键部署
+```bash
+# 赋予脚本执行权限
+chmod +x deploy.sh
+
+# 执行一键部署
+./deploy.sh
 ```
 
-#### 2. 部署微信问卷系统
-```bash
-# 启动微信问卷系统（仅web和db服务，不包含nginx）
-docker-compose up -d
-```
-
-#### 3. 部署独立Nginx服务
-```bash
-# 切换到独立Nginx目录
-cd standalone_nginx
-
-# 启动Nginx服务（负责反向代理和静态文件服务）
-docker-compose up -d
-```
-
-#### 4. 访问应用
-- 通过Nginx访问：http://localhost
+#### 3. 访问应用
+- 应用访问地址：http://localhost
 - 管理后台：http://localhost/admin
 
-#### 5. 常用命令
-
-**启动服务：**
+#### 4. 常用命令
 ```bash
-# 启动微信问卷系统（web + db）
-docker-compose up -d
+# 查看服务日志
+./deploy.sh logs
 
-# 启动Nginx服务
-cd standalone_nginx && docker-compose up -d
-```
+# 停止服务
+./deploy.sh stop
 
-**停止服务：**
-```bash
-# 停止微信问卷系统
-docker-compose down
-
-# 停止Nginx服务
-cd standalone_nginx && docker-compose down
-```
-
-**查看日志：**
-```bash
-# 查看微信问卷系统日志
-docker-compose logs -f web
-
-# 查看Nginx日志
-cd standalone_nginx && docker-compose logs -f nginx
-```
-
-**执行数据库迁移：**
-```bash
-# 执行数据库迁移
-docker-compose run --rm web python manage.py migrate
+# 重启服务
+./deploy.sh restart
 
 # 创建超级用户
 docker-compose run --rm web python manage.py createsuperuser
-
-# 收集静态文件
-docker-compose run --rm web python manage.py collectstatic --noinput
 ```
 
-### 单容器部署（仅开发环境使用）
+### 部署说明
 
-如果需要简单的单容器部署（不推荐生产环境），可以修改docker-compose.yml，将web服务端口映射到80端口：
+- 部署脚本会自动完成以下操作：
+  - 检查Docker和Docker Compose是否安装
+  - 构建Docker镜像
+  - 自动创建网络和卷
+  - 启动所有服务（web + db + nginx）
+  - 执行数据库迁移
+  - 显示服务状态和访问地址
 
-```yaml
-# 在docker-compose.yml中添加端口映射
-ports:
-  - "80:8000"
-# 将uwsgi命令改为使用http模式
-command: >
-  sh -c "python manage.py migrate && uwsgi --http 0.0.0.0:8000 --module wechat_survey.wsgi:application --workers 4 --threads 2 --master --vacuum"
-```
+- 服务架构：
+  - **web**：Django应用，使用uwsgi socket模式
+  - **db**：PostgreSQL数据库
+  - **nginx**：反向代理，处理HTTP请求和静态文件服务
 
-然后直接启动服务：
-```bash
-docker-compose up -d
-```
-
-通过http://localhost访问应用。
+- 所有服务通过Docker网络通信，无需手动配置网络和卷
 
 ### 开发环境设置
 

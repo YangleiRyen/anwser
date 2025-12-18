@@ -13,9 +13,7 @@ services:
     volumes:
       # 将当前目录挂载到容器的/app目录，便于开发时热更新
       - .:/app
-      # 挂载静态文件卷，与nginx共享
       - static_volume:/app/static
-      # 挂载媒体文件卷，与nginx共享
       - media_volume:/app/media
     # 环境变量配置
     environment:
@@ -60,16 +58,45 @@ services:
     networks:
       - wechat_survey_network
 
+  # Nginx服务
+  nginx:
+    # 使用官方nginx镜像
+    image: nginx:1.25-alpine
+    # 容器名称
+    container_name: wechat_survey_nginx
+    # 端口映射，将主机80端口映射到容器80端口
+    ports:
+      - "80:80"
+    # 挂载卷配置
+    volumes:
+      # 挂载nginx配置文件
+      - ./standalone_nginx/nginx.conf:/etc/nginx/nginx.conf:ro
+      # 挂载应用配置目录
+      - ./standalone_nginx/conf.d:/etc/nginx/conf.d:ro
+      # 挂载静态文件卷
+      - static_volume:/app/static
+      # 挂载媒体文件卷
+      - media_volume:/app/media
+    # 依赖关系，确保web服务先启动
+    depends_on:
+      - web
+    # 网络配置，加入wechat_survey_network网络
+    networks:
+      - wechat_survey_network
+    # 重启策略：除非手动停止，否则总是重启
+    restart: unless-stopped
+
 # 网络定义
 networks:
   # 自定义网络，用于容器间通信
+  # docker-compose会自动创建，无需手动创建
   wechat_survey_network:
-    # 使用bridge网络驱动
     driver: bridge
 
 # 卷定义
 volumes:
   # 数据库数据卷
+  # docker-compose会自动创建，无需手动创建
   postgres_data:
   # 静态文件共享卷
   static_volume:
