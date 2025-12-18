@@ -1,37 +1,60 @@
+# Docker Compose配置文件版本
 version: '3.9'
 
-# 定义网络，与微信问卷系统共享
+# 网络定义
 networks:
+  # 复用微信问卷系统的外部网络
   wechat_survey_network:
+    # external: true表示使用已存在的网络，由微信问卷系统创建
     external: true
 
-# 定义卷，与微信问卷系统共享
+# 卷定义
 volumes:
+  # 复用微信问卷系统的外部静态文件卷
   static_volume:
     external: true
+  # 复用微信问卷系统的外部媒体文件卷
   media_volume:
     external: true
 
-# 定义服务
+# 服务定义
 services:
-  # Nginx服务
+  # Nginx反向代理服务
   nginx:
+    # 使用官方最新版Nginx镜像
     image: nginx:latest
+    # 容器名称
     container_name: nginx
+    # 端口映射配置
     ports:
+      # 将容器的80端口映射到主机的80端口（HTTP）
       - "80:80"
+      # 将容器的443端口映射到主机的443端口（HTTPS，预留）
       - "443:443"
+    # 挂载卷配置
     volumes:
+      # 将自定义nginx.conf挂载到容器的/etc/nginx/nginx.conf，ro表示只读
       - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      # 将自定义conf.d目录挂载到容器的/etc/nginx/conf.d，ro表示只读
       - ./conf.d:/etc/nginx/conf.d:ro
+      # 将ssl目录挂载到容器的/etc/nginx/ssl，ro表示只读（用于HTTPS证书）
       - ./ssl:/etc/nginx/ssl:ro
+      # 挂载静态文件卷，与web服务共享
       - static_volume:/app/static
+      # 挂载媒体文件卷，与web服务共享
       - media_volume:/app/media
+    # 网络配置，加入wechat_survey_network网络，与web服务通信
     networks:
       - wechat_survey_network
+    # 重启策略：除非手动停止，否则总是重启
     restart: unless-stopped
+    # 日志配置
     logging:
+      # 使用json-file日志驱动
       driver: "json-file"
+      # 日志选项
       options:
+        # 单个日志文件最大大小为10MB
         max-size: "10m"
+        # 最多保留3个日志文件
         max-file: "3"

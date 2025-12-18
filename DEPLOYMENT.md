@@ -55,7 +55,7 @@ environment:
   - DEBUG=False
   - SECRET_KEY=your-secret-key-here  # 请替换为实际的密钥
   - DATABASE_URL=postgres://postgres:postgres@db:5432/wechat_survey
-  - BASE_URL=http://localhost:8000
+  - BASE_URL=http://localhost
 ```
 
 #### 4. 创建共享网络（多应用部署必需）

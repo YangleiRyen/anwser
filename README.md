@@ -171,7 +171,7 @@ standalone_nginx/
 
 ## 部署说明
 
-### 使用Docker部署
+### 使用Docker部署（nginx + uwsgi分离模式）
 
 #### 1. 部署前准备
 ```bash
@@ -186,7 +186,7 @@ docker volume create postgres_data
 
 #### 2. 部署微信问卷系统
 ```bash
-# 启动微信问卷系统
+# 启动微信问卷系统（仅web和db服务，不包含nginx）
 docker-compose up -d
 ```
 
@@ -195,20 +195,19 @@ docker-compose up -d
 # 切换到独立Nginx目录
 cd standalone_nginx
 
-# 启动Nginx服务
+# 启动Nginx服务（负责反向代理和静态文件服务）
 docker-compose up -d
 ```
 
 #### 4. 访问应用
-- 应用直接访问地址：http://localhost:8000
 - 通过Nginx访问：http://localhost
-- 管理后台：http://localhost/admin 或 http://localhost:8000/admin
+- 管理后台：http://localhost/admin
 
 #### 5. 常用命令
 
 **启动服务：**
 ```bash
-# 启动微信问卷系统
+# 启动微信问卷系统（web + db）
 docker-compose up -d
 
 # 启动Nginx服务
@@ -244,6 +243,26 @@ docker-compose run --rm web python manage.py createsuperuser
 # 收集静态文件
 docker-compose run --rm web python manage.py collectstatic --noinput
 ```
+
+### 单容器部署（仅开发环境使用）
+
+如果需要简单的单容器部署（不推荐生产环境），可以修改docker-compose.yml，将web服务端口映射到80端口：
+
+```yaml
+# 在docker-compose.yml中添加端口映射
+ports:
+  - "80:8000"
+# 将uwsgi命令改为使用http模式
+command: >
+  sh -c "python manage.py migrate && uwsgi --http 0.0.0.0:8000 --module wechat_survey.wsgi:application --workers 4 --threads 2 --master --vacuum"
+```
+
+然后直接启动服务：
+```bash
+docker-compose up -d
+```
+
+通过http://localhost访问应用。
 
 ### 开发环境设置
 

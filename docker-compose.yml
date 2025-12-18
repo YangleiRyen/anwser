@@ -1,59 +1,77 @@
+# Docker Compose配置文件版本
 version: '3.9'
 
+# 服务定义
 services:
-  # Django应用服务（使用uwsgi）
+  # Django应用服务（使用uwsgi的socket模式，配合nginx反向代理）
   web:
+    # 构建上下文为当前目录，使用当前目录的Dockerfile
     build: .
+    # 容器名称
     container_name: wechat_survey_web
+    # 挂载卷配置
     volumes:
+      # 将当前目录挂载到容器的/app目录，便于开发时热更新
       - .:/app
+      # 挂载静态文件卷，与nginx共享
       - static_volume:/app/static
+      # 挂载媒体文件卷，与nginx共享
       - media_volume:/app/media
+    # 环境变量配置
     environment:
+      # 关闭DEBUG模式（生产环境必需）
       - DEBUG=False
+      # Django密钥，生产环境必须修改为强随机字符串
       - SECRET_KEY=your-secret-key-here
+      # 数据库连接URL
       - DATABASE_URL=postgres://postgres:postgres@db:5432/wechat_survey
-      - BASE_URL=http://localhost:80
+      # 应用基础URL
+      - BASE_URL=http://localhost
+    # 依赖关系，确保db服务先启动
     depends_on:
       - db
+    # 容器启动命令
     command: >
       sh -c "python manage.py migrate && uwsgi --ini uwsgi.ini"
+      # 1. 执行数据库迁移
+      # 2. 使用uwsgi.ini配置文件启动uwsgi服务
+    # 网络配置，加入wechat_survey_network网络
     networks:
       - wechat_survey_network
 
   # PostgreSQL数据库服务
   db:
+    # 使用官方PostgreSQL 15镜像，alpine版本体积更小
     image: postgres:15-alpine
+    # 容器名称
     container_name: wechat_survey_db
+    # 挂载卷，持久化数据库数据
     volumes:
       - postgres_data:/var/lib/postgresql/data
+    # 环境变量配置
     environment:
+      # 数据库名称
       - POSTGRES_DB=wechat_survey
+      # 数据库用户名
       - POSTGRES_USER=postgres
+      # 数据库密码
       - POSTGRES_PASSWORD=postgres
+    # 网络配置，加入wechat_survey_network网络
     networks:
       - wechat_survey_network
 
-  # Nginx服务
-  nginx:
-    build: ./nginx
-    container_name: wechat_survey_nginx
-    ports:
-      - "80:80"
-    volumes:
-      - static_volume:/app/static
-      - media_volume:/app/media
-      - ./nginx/conf.d:/etc/nginx/conf.d
-    depends_on:
-      - web
-    networks:
-      - wechat_survey_network
-
+# 网络定义
 networks:
+  # 自定义网络，用于容器间通信
   wechat_survey_network:
+    # 使用bridge网络驱动
     driver: bridge
 
+# 卷定义
 volumes:
+  # 数据库数据卷
   postgres_data:
+  # 静态文件共享卷
   static_volume:
+  # 媒体文件共享卷
   media_volume:
