@@ -1,12 +1,10 @@
 version: '3.9'
 
 services:
-  # Django应用服务
+  # Django应用服务（使用uwsgi）
   web:
     build: .
     container_name: wechat_survey_web
-    ports:
-      - "8000:8000"
     volumes:
       - .:/app
       - static_volume:/app/static
@@ -15,24 +13,45 @@ services:
       - DEBUG=False
       - SECRET_KEY=your-secret-key-here
       - DATABASE_URL=postgres://postgres:postgres@db:5432/wechat_survey
-      - BASE_URL=http://localhost:8000
+      - BASE_URL=http://localhost:80
     depends_on:
       - db
     command: >
-      sh -c "python manage.py migrate && uwsgi --http-socket 0.0.0.0:8000 --module wechat_survey.wsgi:application --workers 4 --threads 2 --master --vacuum"
+      sh -c "python manage.py migrate && uwsgi --ini uwsgi.ini"
+    networks:
+      - wechat_survey_network
 
   # PostgreSQL数据库服务
   db:
     image: postgres:15-alpine
     container_name: wechat_survey_db
-    ports:
-      - "5432:5432"
     volumes:
       - postgres_data:/var/lib/postgresql/data
     environment:
       - POSTGRES_DB=wechat_survey
       - POSTGRES_USER=postgres
       - POSTGRES_PASSWORD=postgres
+    networks:
+      - wechat_survey_network
+
+  # Nginx服务
+  nginx:
+    build: ./nginx
+    container_name: wechat_survey_nginx
+    ports:
+      - "80:80"
+    volumes:
+      - static_volume:/app/static
+      - media_volume:/app/media
+      - ./nginx/conf.d:/etc/nginx/conf.d
+    depends_on:
+      - web
+    networks:
+      - wechat_survey_network
+
+networks:
+  wechat_survey_network:
+    driver: bridge
 
 volumes:
   postgres_data:

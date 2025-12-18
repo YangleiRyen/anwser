@@ -9,4 +9,5 @@ asgiref==3.11.0
 sqlparse==0.5.4
 urllib3==2.5.0
 certifi==2025.11.12
-# uwsgi==2.0.25
+uwsgi==2.0.25
+dj-database-url==2.1.0
