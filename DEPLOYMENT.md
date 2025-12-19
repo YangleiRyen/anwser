@@ -21,7 +21,7 @@ curl -fsSL https://get.docker.com -o get-docker.sh
 sudo sh get-docker.sh
 
 # 安装Docker Compose
-sudo apt install -y docker-compose
+sudo apt install -y docker compose
 ```
 
 **CentOS/RHEL系统：**
@@ -32,7 +32,7 @@ yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce
 yum install -y docker-ce docker-ce-cli containerd.io
 
 # 安装Docker Compose
-yum install -y docker-compose
+yum install -y docker compose
 ```
 
 **启动Docker服务：**
@@ -49,14 +49,33 @@ cd wechat_survey
 
 #### 3. 配置环境变量
 
-编辑`docker-compose.yml`文件，修改以下环境变量：
-```yaml
-environment:
-  - DEBUG=False
-  - SECRET_KEY=your-secret-key-here  # 请替换为实际的密钥
-  - DATABASE_URL=postgres://postgres:postgres@db:5432/wechat_survey
-  - BASE_URL=http://localhost
+1. **创建.env文件**
+
+在项目根目录创建`.env`文件：
+```bash
+cp .env.example .env
 ```
+
+2. **编辑.env文件**
+
+修改`.env`文件中的环境变量：
+```bash
+# Django配置
+DEBUG=False
+SECRET_KEY=your-secret-key-here-change-this-in-production  # 请替换为实际的密钥
+BASE_URL=http://localhost
+
+# 数据库配置
+DATABASE_URL=postgres://postgres:postgres@db:5432/wechat_survey
+
+# 微信配置（可选，根据实际需求配置）
+WECHAT_APP_ID=
+WECHAT_APP_SECRET=
+```
+
+3. **查看所有可用环境变量**
+
+`.env`文件中包含了所有可用的环境变量，你可以根据实际需求进行配置。
 
 #### 4. 创建共享网络（多应用部署必需）
 
@@ -76,7 +95,7 @@ docker volume create postgres_data
 
 **启动微信问卷系统：**
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 #### 6. 部署独立Nginx服务
@@ -88,7 +107,7 @@ cd standalone_nginx
 
 **启动Nginx服务：**
 ```bash
-docker-compose up -d
+docker compose up -d
 ```
 
 ### 访问应用
@@ -100,40 +119,40 @@ docker-compose up -d
 **启动服务：**
 ```bash
 # 启动微信问卷系统
-docker-compose up -d
+docker compose up -d
 
 # 启动Nginx服务
-cd standalone_nginx && docker-compose up -d
+cd standalone_nginx && docker compose up -d
 ```
 
 **停止服务：**
 ```bash
 # 停止微信问卷系统
-docker-compose down
+docker compose down
 
 # 停止Nginx服务
-cd standalone_nginx && docker-compose down
+cd standalone_nginx && docker compose down
 ```
 
 **查看日志：**
 ```bash
 # 查看微信问卷系统日志
-docker-compose logs -f web
+docker compose logs -f web
 
 # 查看Nginx日志
-cd standalone_nginx && docker-compose logs -f nginx
+cd standalone_nginx && docker compose logs -f nginx
 ```
 
 **执行数据库迁移：**
 ```bash
 # 执行数据库迁移
-docker-compose run --rm web python manage.py migrate
+docker compose run --rm web python manage.py migrate
 
 # 创建超级用户
-docker-compose run --rm web python manage.py createsuperuser
+docker compose run --rm web python manage.py createsuperuser
 
 # 收集静态文件
-docker-compose run --rm web python manage.py collectstatic --noinput
+docker compose run --rm web python manage.py collectstatic --noinput
 ```
 
 ## 多应用部署指导
@@ -167,10 +186,10 @@ docker-compose run --rm web python manage.py collectstatic --noinput
 #### 2.1 准备新应用
 
 1. **确保新应用使用与微信问卷系统相同的网络和卷**
-2. **修改新应用的docker-compose.yml，添加网络配置**
+2. **修改新应用的docker compose.yml，添加网络配置**
 
 ```yaml
-# 新应用docker-compose.yml示例
+# 新应用docker compose.yml示例
 networks:
   wechat_survey_network:
     external: true
@@ -227,7 +246,7 @@ server {
 
 ```bash
 cd standalone_nginx
-docker-compose restart nginx
+docker compose restart nginx
 ```
 
 ### 3. 多应用管理
@@ -236,22 +255,22 @@ docker-compose restart nginx
 
 ```bash
 # 查看微信问卷系统状态
-docker-compose ps
+docker compose ps
 
 # 查看Nginx状态
-cd standalone_nginx && docker-compose ps
+cd standalone_nginx && docker compose ps
 
 # 查看新应用状态
-cd /path/to/new_app && docker-compose ps
+cd /path/to/new_app && docker compose ps
 ```
 
 #### 3.2 日志管理
 
 ```bash
 # 查看所有应用日志
-docker-compose logs -f
-cd standalone_nginx && docker-compose logs -f
-cd /path/to/new_app && docker-compose logs -f
+docker compose logs -f
+cd standalone_nginx && docker compose logs -f
+cd /path/to/new_app && docker compose logs -f
 ```
 
 #### 3.3 升级应用
@@ -259,12 +278,12 @@ cd /path/to/new_app && docker-compose logs -f
 ```bash
 # 升级微信问卷系统
 git pull
-docker-compose build
-docker-compose up -d
+docker compose build
+docker compose up -d
 
 # 升级Nginx配置（如果有修改）
 cd standalone_nginx
-docker-compose restart nginx
+docker compose restart nginx
 ```
 
 ### 4. 多应用部署最佳实践
@@ -275,6 +294,153 @@ docker-compose restart nginx
 4. **统一Nginx配置**：使用独立的Nginx服务管理所有应用的反向代理
 5. **使用域名或子域名**：为每个应用配置独立的域名或子域名
 6. **SSL证书管理**：使用Let's Encrypt等工具为所有应用配置HTTPS
+
+## 生产环境部署最佳实践
+
+### 1. 安全配置
+
+#### 1.1 基本安全设置
+- **修改SECRET_KEY**：使用强随机字符串作为SECRET_KEY
+  ```bash
+  # 生成强随机字符串（Linux/macOS）
+  openssl rand -hex 32
+  ```
+- **关闭DEBUG模式**：确保`DEBUG=False`
+- **配置ALLOWED_HOSTS**：只允许特定域名访问
+  ```bash
+  ALLOWED_HOSTS=your-domain.com,www.your-domain.com
+  ```
+- **启用HTTPS**：生产环境必须使用HTTPS
+  ```bash
+  USE_SSL=True
+  ```
+
+#### 1.2 数据库安全
+- **修改默认数据库密码**：
+  ```bash
+  # 在.env文件中修改数据库连接URL
+  DATABASE_URL=postgres://postgres:your-strong-db-password@db:5432/wechat_survey
+  ```
+- **定期备份数据库**：
+  ```bash
+  # 手动备份示例
+  docker compose exec db pg_dump -U postgres wechat_survey > backup_$(date +%Y%m%d_%H%M%S).sql
+  ```
+
+### 2. 性能优化
+
+#### 2.1 uWSGI配置优化
+- 根据服务器CPU核心数调整uwsgi.ini中的workers和threads
+  ```ini
+  # uwsgi.ini
+  workers = 4  # 建议设置为CPU核心数
+  threads = 2  # 每个worker的线程数
+  ```
+
+#### 2.2 静态文件优化
+- 确保已执行`collectstatic`命令
+- 考虑使用CDN加速静态文件访问
+
+#### 2.3 数据库优化
+- 定期执行数据库优化
+  ```bash
+  docker compose run --rm web python manage.py dbshell
+  VACUUM ANALYZE;
+  ```
+
+### 3. 备份策略
+
+#### 3.1 自动备份脚本示例
+```bash
+#!/bin/bash
+# 数据库自动备份脚本
+
+DATE=$(date +%Y%m%d_%H%M%S)
+BACKUP_DIR="/path/to/backups"
+CONTAINER_NAME="wechat_survey_db"
+
+# 创建备份目录
+mkdir -p $BACKUP_DIR
+
+# 执行备份
+docker compose exec $CONTAINER_NAME pg_dump -U postgres wechat_survey > $BACKUP_DIR/backup_$DATE.sql
+
+# 压缩备份文件
+gzip $BACKUP_DIR/backup_$DATE.sql
+
+# 保留最近7天的备份
+find $BACKUP_DIR -name "backup_*.sql.gz" -mtime +7 -delete
+```
+
+#### 3.2 备份频率建议
+- **数据库**：每天备份一次
+- **静态文件和媒体文件**：每周备份一次
+- **配置文件**：每次修改后备份
+
+### 4. 监控和日志管理
+
+#### 4.1 日志查看
+```bash
+# 查看所有服务日志
+./deploy.sh logs
+
+# 查看特定服务日志
+docker compose logs -f web
+```
+
+#### 4.2 日志持久化
+- 考虑使用ELK Stack或Loki等工具进行日志集中管理
+- 定期清理旧日志
+
+### 5. 升级和维护
+
+#### 5.1 应用升级流程
+```bash
+# 1. 拉取最新代码
+git pull
+
+# 2. 停止并移除旧容器
+./deploy.sh stop
+
+# 3. 构建新镜像并部署
+./deploy.sh --prod deploy
+
+# 4. 验证部署
+docker compose ps
+```
+
+#### 5.2 定期维护任务
+- 检查Docker镜像更新
+- 清理未使用的Docker资源
+  ```bash
+  docker system prune -f
+  ```
+- 更新依赖包
+  ```bash
+  pip install -r requirements.txt --upgrade
+  ```
+
+### 6. 生产环境一键部署
+
+#### 6.1 部署命令
+```bash
+# 生产环境一键部署
+./deploy.sh --prod deploy
+```
+
+#### 6.2 部署脚本特点
+- 自动检查Docker和Docker Compose安装
+- 验证生产环境配置安全性
+- 自动构建镜像
+- 执行数据库迁移
+- 收集静态文件
+- 启动所有服务
+- 显示服务状态和访问地址
+
+#### 6.3 生产环境注意事项
+- 部署前确保已备份数据
+- 部署过程中应用会短暂不可用
+- 部署后验证应用功能
 
 ## 常见问题和解决方案
 

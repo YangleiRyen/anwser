@@ -15,7 +15,7 @@
 | `.gitignore` | Git忽略文件配置，指定Git需要忽略的文件和目录 |
 | `requirements.txt` | Python依赖列表，包含项目所需的所有Python依赖包 |
 | `Dockerfile` | Docker镜像构建文件，定义了应用的运行环境 |
-| `docker-compose.yml` | Docker Compose配置文件，定义了多容器部署方案 |
+| `docker compose.yml` | Docker Compose配置文件，定义了多容器部署方案 |
 | `deploy.sh` | 部署脚本，用于简化Docker容器的管理和操作 |
 | `DEPLOYMENT.md` | 部署文档，详细说明项目的Docker部署步骤 |
 | `manage.py` | Django项目管理脚本，用于执行各种Django命令 |
@@ -131,7 +131,7 @@ standalone_nginx/
 │   └── wechat_survey.conf  # 微信问卷系统Nginx配置
 ├── ssl/                   # SSL证书目录
 ├── nginx.conf             # Nginx主配置文件
-└── docker-compose.yml     # Nginx的Docker Compose配置
+└── docker compose.yml     # Nginx的Docker Compose配置
 ```
 
 **文件说明：**
@@ -141,7 +141,7 @@ standalone_nginx/
 | `conf.d/` | 应用配置目录，包含各应用的Nginx配置 |
 | `conf.d/wechat_survey.conf` | 微信问卷系统Nginx配置，包含反向代理、静态文件服务等 |
 | `ssl/` | SSL证书目录，用于存放HTTPS所需的SSL证书和密钥 |
-| `docker-compose.yml` | Nginx的Docker Compose配置，定义了Nginx服务的部署方式 |
+| `docker compose.yml` | Nginx的Docker Compose配置，定义了Nginx服务的部署方式 |
 
 ## 项目根目录文件详解
 
@@ -158,7 +158,7 @@ standalone_nginx/
 - **.gitignore**: Git忽略文件配置，指定Git版本控制中需要忽略的文件和目录，如虚拟环境、日志文件等
 - **requirements.txt**: Python依赖列表，列出项目所需的所有Python依赖包及其版本，用于安装依赖
 - **Dockerfile**: Docker镜像构建文件，定义Docker镜像的构建步骤，包括基础镜像、依赖安装、文件复制等
-- **docker-compose.yml**: Docker Compose配置，定义多容器部署方案，包括web服务和db服务
+- **docker compose.yml**: Docker Compose配置，定义多容器部署方案，包括web服务和db服务
 
 ### 3. 部署相关
 
@@ -176,6 +176,15 @@ standalone_nginx/
 #### 1. 部署前准备
 - 确保已安装Docker和Docker Compose
 - 克隆项目代码到本地
+- 配置环境变量（.env文件）
+
+  ```bash
+  # 创建.env文件
+  cp .env.example .env
+  
+  # 编辑.env文件，修改必要的环境变量
+  # 特别是SECRET_KEY，生产环境必须修改为强随机字符串
+  ```
 
 #### 2. 执行一键部署
 ```bash
@@ -202,7 +211,47 @@ chmod +x deploy.sh
 ./deploy.sh restart
 
 # 创建超级用户
-docker-compose run --rm web python manage.py createsuperuser
+docker compose run --rm web python manage.py createsuperuser
+```
+
+### 生产环境部署
+
+#### 1. 生产环境部署前准备
+- 确保已安装Docker和Docker Compose
+- 克隆项目代码到本地
+- 配置.env文件，特别注意：
+  - 修改SECRET_KEY为强随机字符串
+  - 确保DEBUG=False
+  - 根据实际情况配置ALLOWED_HOSTS
+  - 后续可根据需要配置USE_SSL=True启用HTTPS
+
+#### 2. 执行生产环境一键部署
+```bash
+# 赋予脚本执行权限
+chmod +x deploy.sh
+
+# 执行生产环境一键部署
+./deploy.sh --prod deploy
+```
+
+#### 3. 生产环境部署特点
+- 自动检查生产环境配置，确保安全性
+- 使用production_settings.py配置文件
+- 自动收集静态文件
+- 执行数据库迁移
+- 启用服务自动重启策略
+- 提供生产环境注意事项提示
+
+#### 4. 生产环境常用命令
+```bash
+# 生产环境部署
+./deploy.sh --prod deploy
+
+# 生产环境重启服务
+./deploy.sh --prod restart
+
+# 查看生产环境日志
+./deploy.sh --prod logs
 ```
 
 ### 部署说明

@@ -15,24 +15,19 @@ services:
       - .:/app
       - static_volume:/app/static
       - media_volume:/app/media
-    # 环境变量配置
-    environment:
-      # 关闭DEBUG模式（生产环境必需）
-      - DEBUG=False
-      # Django密钥，生产环境必须修改为强随机字符串
-      - SECRET_KEY=your-secret-key-here
-      # 数据库连接URL
-      - DATABASE_URL=postgres://postgres:postgres@db:5432/wechat_survey
-      # 应用基础URL
-      - BASE_URL=http://localhost
+    # 环境变量配置：从.env文件读取
+    env_file:
+      - .env
     # 依赖关系，确保db服务先启动
     depends_on:
       - db
     # 容器启动命令
     command: >
-      sh -c "python manage.py migrate && uwsgi --ini uwsgi.ini"
-      # 1. 执行数据库迁移
-      # 2. 使用uwsgi.ini配置文件启动uwsgi服务
+      sh -c "uwsgi --ini uwsgi.ini"
+      # 使用uwsgi.ini配置文件启动uwsgi服务
+      # 注意：数据库迁移已在deploy.sh脚本中单独执行，确保迁移过程可见
+    # 重启策略：除非手动停止，否则总是重启
+    restart: unless-stopped
     # 网络配置，加入wechat_survey_network网络
     networks:
       - wechat_survey_network
