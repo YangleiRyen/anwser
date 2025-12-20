@@ -1,0 +1,22 @@
+# docker-compose.dev.yml
+version: '3.8'
+
+services:
+  django:
+    build:
+      context: .
+      dockerfile: Dockerfile.django
+    ports:
+      - "8000:8000"
+    volumes:
+      - .:/app  # 代码热更新
+      - static_volume:/app/static  # 静态文件
+      - media_volume:/app/media    # 媒体文件
+    environment:
+      - DEBUG=True
+      - DJANGO_SETTINGS_MODULE=yourproject.settings.dev
+    restart: unless-stopped
+
+volumes:
+  static_volume:
+  media_volume:
