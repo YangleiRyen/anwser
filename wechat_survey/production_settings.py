@@ -1,26 +1,52 @@
 # production_settings.py
+# 生产环境配置文件
+# 继承自settings.py，仅覆盖生产环境特定配置
+
 import os
 from .settings import *
 
+# ====================================
 # 生产环境核心配置
+# ====================================
+
+# 生产环境必须关闭DEBUG模式
 DEBUG = False
 
-# 允许的主机配置
-# 注意：生产环境中应设置为具体的域名，而不是通配符
-# 示例：ALLOWED_HOSTS = ['example.com', 'www.example.com']
-ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
+# 生产环境必须指定具体的域名，不能使用通配符
+# 多个域名用列表形式配置
+ALLOWED_HOSTS = ['your-domain.com', 'www.your-domain.com']
 
-# 使用DATABASE_URL环境变量配置数据库（MySQL）
-import dj_database_url
-# 默认使用MySQL数据库
-DATABASE_URL = os.environ.get('DATABASE_URL', 'mysql://root:password@localhost:3306/wechat_survey')
+# 生产环境密钥，必须使用强随机字符串
+SECRET_KEY = 'your-production-secret-key-change-this-to-random-string'
+
+# ====================================
+# 数据库配置（MySQL）
+# ====================================
+
+# 生产环境使用MySQL数据库
+# 直接配置数据库连接参数，不使用环境变量
 DATABASES = {
-    'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600),
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': 'wechat_survey',
+        'USER': 'wechat_survey_user',
+        'PASSWORD': 'your-strong-db-password',
+        'HOST': 'localhost',
+        'PORT': '3306',
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'sql_mode': 'STRICT_TRANS_TABLES',
+        },
+    }
 }
 
-# 安全设置
-# 从环境变量读取SSL配置，方便切换HTTP/HTTPS
-USE_SSL = os.environ.get('USE_SSL', 'False') == 'True'
+# ====================================
+# 安全配置
+# ====================================
+
+# 生产环境SSL配置
+# 初始部署时可设置为False，后续配置SSL后改为True
+USE_SSL = False
 
 if USE_SSL:
     # HTTPS配置
@@ -46,25 +72,32 @@ SECURE_CONTENT_TYPE_NOSNIFF = True  # 防止浏览器猜测内容类型
 SECURE_BROWSER_XSS_FILTER = True  # 启用浏览器XSS过滤器
 X_FRAME_OPTIONS = 'DENY'  # 防止点击劫持
 
-# 静态文件路径（与docker-compose.yml中的卷配置匹配）
-STATIC_ROOT = '/app/static/'
-MEDIA_ROOT = '/app/media/'
+# ====================================
+# 静态文件和媒体文件配置
+# ====================================
+
+# 静态文件根目录 - 使用相对路径
+STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+
+# 媒体文件根目录 - 使用相对路径
+MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
 # 静态文件URL
 STATIC_URL = '/static/'
+
+# 媒体文件URL
 MEDIA_URL = '/media/'
 
-# 日志配置 - 增强生产环境日志
+# ====================================
+# 日志配置
+# ====================================
+
 LOGGING = {
     'version': 1,
     'disable_existing_loggers': False,
     'formatters': {
         'verbose': {
             'format': '{levelname} {asctime} {module} {process:d} {thread:d} {message}',
-            'style': '{',
-        },
-        'simple': {
-            'format': '{levelname} {message}',
             'style': '{',
         },
     },
@@ -77,17 +110,17 @@ LOGGING = {
     'loggers': {
         'django': {
             'handlers': ['console'],
-            'level': os.environ.get('DJANGO_LOG_LEVEL', 'ERROR'),
+            'level': 'ERROR',  # 生产环境只记录错误日志
             'propagate': False,
         },
         'django.request': {
             'handlers': ['console'],
-            'level': 'WARNING',
+            'level': 'WARNING',  # 请求相关日志记录到WARNING级别
             'propagate': False,
         },
         'survey': {
             'handlers': ['console'],
-            'level': os.environ.get('DJANGO_LOG_LEVEL', 'INFO'),
+            'level': 'INFO',  # 业务日志记录到INFO级别
             'propagate': False,
         },
     },

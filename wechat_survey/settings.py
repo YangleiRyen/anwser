@@ -12,12 +12,6 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 
 from pathlib import Path
 import os
-from dotenv import load_dotenv  # 从dotenv库导入load_dotenv函数
-load_dotenv()  # 加载.env文件
-
-# Initialize PyMySQL for MySQL support
-import pymysql
-pymysql.install_as_MySQLdb()
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
@@ -27,11 +21,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-SECRET_KEY = os.environ.get('SECRET_KEY', 'django-insecure-wa478o&xc3^6#_xo2c-h)sjyg%-0qtm#n(36jvsu+q=+)xr1b8')
+# 开发环境密钥，生产环境会被覆盖
+SECRET_KEY = 'django-insecure-wa478o&xc3^6#_xo2c-h)sjyg%-0qtm#n(36jvsu+q=+)xr1b8'
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = os.environ.get('DEBUG', 'True') == 'True'
+DEBUG = True
 
+# 开发环境允许所有主机访问
 ALLOWED_HOSTS = ['*']
 
 
@@ -81,6 +77,7 @@ WSGI_APPLICATION = 'wechat_survey.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
+# 开发环境使用SQLite数据库，简单易用
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.sqlite3',
@@ -126,21 +123,15 @@ USE_TZ = True
 
 DEFAULT_AUTO_FIELD = 'django.db.models.BigAutoField'
 
+# 初始化PyMySQL，支持MySQL数据库（生产环境使用）
+import pymysql
+pymysql.install_as_MySQLdb()
+
 # === 以下是微信问卷系统的额外配置 ===
-import os
-from django.core.exceptions import ImproperlyConfigured
 
-def get_env_variable(var_name):
-    """获取环境变量，如果不存在则抛出异常"""
-    try:
-        return os.environ[var_name]
-    except KeyError:
-        error_msg = f"请设置 {var_name} 环境变量"
-        raise ImproperlyConfigured(error_msg)
-
-# 微信配置（需要在环境变量中设置）
-WECHAT_APP_ID = os.environ.get('WECHAT_APP_ID')
-WECHAT_APP_SECRET = os.environ.get('WECHAT_APP_SECRET')
+# 微信配置（开发环境可留空，生产环境会被覆盖）
+WECHAT_APP_ID = ''
+WECHAT_APP_SECRET = ''
 
 # 静态文件配置
 STATIC_URL = '/static/'

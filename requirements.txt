@@ -13,6 +13,3 @@ dj-database-url==2.1.0
 
 # MySQL Support
 pymysql==1.1.1
-
-# Environment Variables
-python-dotenv==1.0.1
