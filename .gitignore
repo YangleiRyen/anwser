@@ -37,6 +37,7 @@ Thumbs.db
 venv/
 env/
 .env/
+*.env
 
 
 # 测试

@@ -1,121 +1,277 @@
 # 微信问卷系统部署文档
 
 ## 项目介绍
-微信问卷系统是基于Django开发的问卷调查系统，支持创建问卷、生成二维码、收集反馈等功能。本文档将介绍Docker部署方案（nginx+uwsgi），采用单应用部署方式。
+微信问卷系统是基于Django开发的问卷调查系统，支持创建问卷、生成二维码、收集反馈等功能。本文档将介绍传统部署方案，采用单应用部署方式。
 
-## Docker部署方案
+## 系统要求
+- Linux系统（如Ubuntu/Debian、CentOS/RHEL）
+- Python 3.9+
+- MySQL 8.0+
 
-### 系统要求
-- Linux系统
-- Docker 19.03+
-- Docker Compose 1.27+
+## 安装步骤
 
-### 安装步骤
+### 1. 安装依赖
 
-#### 1. 安装Docker和Docker Compose
+#### 1.1 安装系统依赖
 
 **Ubuntu/Debian系统：**
 ```bash
-# 安装Docker
-curl -fsSL https://get.docker.com -o get-docker.sh
-sudo sh get-docker.sh
+# 更新系统
+apt update && apt upgrade -y
 
-# 安装Docker Compose
-sudo apt install -y docker compose
+# 安装Python和MySQL
+apt install -y python3 python3-pip python3-venv mysql-server
 ```
 
 **CentOS/RHEL系统：**
 ```bash
-# 安装Docker
-yum install -y yum-utils
-yum-config-manager --add-repo https://download.docker.com/linux/centos/docker-ce.repo
-yum install -y docker-ce docker-ce-cli containerd.io
+# 更新系统
+yum update -y
 
-# 安装Docker Compose
-yum install -y docker compose
+# 安装Python和MySQL
+yum install -y python3 python3-pip python3-venv mysql-server
 ```
 
-**启动Docker服务：**
+#### 1.2 启动MySQL服务
+
+**Ubuntu/Debian系统：**
 ```bash
-sudo systemctl enable docker
-sudo systemctl start docker
+systemctl enable mysql
+systemctl start mysql
 ```
 
-#### 2. 克隆项目代码
+**CentOS/RHEL系统：**
+```bash
+systemctl enable mysqld
+systemctl start mysqld
+```
+
+### 2. 准备项目
+
+#### 2.1 克隆项目代码
 ```bash
 git clone https://github.com/your-repo/wechat_survey.git
 cd wechat_survey
 ```
 
-#### 3. 配置环境变量
-
-1. **创建.env文件**
-
-在项目根目录创建`.env`文件：
+#### 2.2 创建虚拟环境
 ```bash
-cp .env.example .env
+python3 -m venv venv
+source venv/bin/activate  # Linux/macOS
+# 或在Windows上使用：venv\Scripts\activate
 ```
 
-2. **编辑.env文件**
-
-修改`.env`文件中的环境变量：
+#### 2.3 安装Python依赖
 ```bash
+pip install -r requirements.txt
+```
+
+### 3. 配置数据库
+
+#### 3.1 创建数据库
+```bash
+# 登录MySQL
+mysql -u root -p
+
+# 创建数据库和用户
+CREATE DATABASE wechat_survey CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+CREATE USER 'wechat'@'localhost' IDENTIFIED BY 'your-strong-password';
+GRANT ALL PRIVILEGES ON wechat_survey.* TO 'wechat'@'localhost';
+FLUSH PRIVILEGES;
+EXIT;
+```
+
+#### 3.2 配置环境变量
+
+创建`.env`文件并配置数据库连接：
+```bash
+# 复制示例文件
+cp .env.example .env
+
+# 编辑.env文件
+nano .env
+```
+
+配置内容：
+```
 # Django配置
 DEBUG=False
-SECRET_KEY=your-secret-key-here-change-this-in-production  # 请替换为实际的密钥
-BASE_URL=http://localhost
+SECRET_KEY=your-secret-key-here-change-this-in-production
+BASE_URL=http://your-domain.com
+ALLOWED_HOSTS=your-domain.com
 
-# 数据库配置
-DATABASE_URL=postgres://postgres:postgres@db:5432/wechat_survey
+# SSL配置
+USE_SSL=False
 
-# 微信配置（可选，根据实际需求配置）
+# 数据库配置（MySQL）
+DATABASE_URL=mysql://wechat:your-strong-password@localhost:3306/wechat_survey
+
+# 微信配置（可选）
 WECHAT_APP_ID=
 WECHAT_APP_SECRET=
+
+# 日志配置
+DJANGO_LOG_LEVEL=ERROR
 ```
 
-3. **查看所有可用环境变量**
+### 4. 部署应用
 
-`.env`文件中包含了所有可用的环境变量，你可以根据实际需求进行配置。
-
-#### 4. 部署微信问卷系统
-
-**启动微信问卷系统：**
+#### 4.1 执行数据库迁移
 ```bash
-docker compose up -d
+# 激活虚拟环境（如果尚未激活）
+source venv/bin/activate
+
+# 执行数据库迁移
+python manage.py migrate
 ```
 
-> 说明：docker compose会自动创建所需的网络和卷，无需手动创建。
-
-### 访问应用
-- 应用访问地址：http://localhost
-
-### 常用命令
-
-**启动服务：**
+#### 4.2 收集静态文件
 ```bash
-docker compose up -d
+python manage.py collectstatic --noinput
+```
+
+#### 4.3 创建超级用户
+```bash
+python manage.py createsuperuser
+```
+
+#### 4.4 配置Web服务器
+
+##### 使用Gunicorn（推荐）
+```bash
+# 安装Gunicorn
+pip install gunicorn
+
+# 启动Gunicorn
+gunicorn --bind 0.0.0.0:8000 wechat_survey.wsgi:application
+```
+
+##### 使用uWSGI（可选）
+```bash
+# 安装uWSGI
+pip install uwsgi
+
+# 启动uWSGI
+uwsgi --http :8000 --module wechat_survey.wsgi:application
+```
+
+#### 4.5 配置Nginx反向代理
+
+**安装Nginx：**
+```bash
+# Ubuntu/Debian
+apt install -y nginx
+
+# CentOS/RHEL
+yum install -y nginx
+```
+
+**创建Nginx配置文件：**
+```bash
+nano /etc/nginx/sites-available/wechat_survey
+```
+
+**配置内容：**
+```nginx
+server {
+    listen 80;
+    server_name your-domain.com;
+
+    # 静态文件服务
+    location /static/ {
+        alias /path/to/wechat_survey/staticfiles/;
+        expires 30d;
+        add_header Cache-Control public;
+    }
+
+    # 媒体文件服务
+    location /media/ {
+        alias /path/to/wechat_survey/media/;
+    }
+
+    # 应用代理
+    location / {
+        proxy_pass http://127.0.0.1:8000;
+        proxy_set_header Host $host;
+        proxy_set_header X-Real-IP $remote_addr;
+        proxy_set_header X-Forwarded-For $proxy_add_x_forwarded_for;
+        proxy_set_header X-Forwarded-Proto $scheme;
+    }
+}
+```
+
+**启用配置：**
+```bash
+ln -s /etc/nginx/sites-available/wechat_survey /etc/nginx/sites-enabled/
+nginx -t  # 测试配置
+systemctl reload nginx
+```
+
+### 5. 启动服务
+
+**使用Systemd管理服务：**
+
+创建服务文件：
+```bash
+nano /etc/systemd/system/wechat_survey.service
+```
+
+配置内容：
+```ini
+[Unit]
+Description=WeChat Survey System
+After=network.target mysql.service
+
+[Service]
+User=www-data
+Group=www-data
+WorkingDirectory=/path/to/wechat_survey
+ExecStart=/path/to/wechat_survey/venv/bin/gunicorn --bind 127.0.0.1:8000 wechat_survey.wsgi:application
+Restart=always
+Environment="PATH=/path/to/wechat_survey/venv/bin"
+
+[Install]
+WantedBy=multi-user.target
+```
+
+启动服务：
+```bash
+systemctl daemon-reload
+systemctl enable wechat_survey
+systemctl start wechat_survey
+```
+
+## 访问应用
+- 应用访问地址：http://your-domain.com
+- 管理后台：http://your-domain.com/admin
+
+## 常用命令
+
+**查看服务状态：**
+```bash
+systemctl status wechat_survey
+```
+
+**查看服务日志：**
+```bash
+journalctl -u wechat_survey -f
+```
+
+**重启服务：**
+```bash
+systemctl restart wechat_survey
 ```
 
 **停止服务：**
 ```bash
-docker compose down
-```
-
-**查看日志：**
-```bash
-docker compose logs -f
+systemctl stop wechat_survey
 ```
 
 **执行数据库迁移：**
 ```bash
-# 执行数据库迁移
-docker compose run --rm web python manage.py migrate
-
-# 创建超级用户
-docker compose run --rm web python manage.py createsuperuser
-
-# 收集静态文件
-docker compose run --rm web python manage.py collectstatic --noinput
+cd /path/to/wechat_survey
+source venv/bin/activate
+python manage.py migrate
 ```
 
 ## 生产环境部署最佳实践
@@ -125,167 +281,69 @@ docker compose run --rm web python manage.py collectstatic --noinput
 #### 1.1 基本安全设置
 - **修改SECRET_KEY**：使用强随机字符串作为SECRET_KEY
   ```bash
-  # 生成强随机字符串（Linux/macOS）
   openssl rand -hex 32
   ```
 - **关闭DEBUG模式**：确保`DEBUG=False`
 - **配置ALLOWED_HOSTS**：只允许特定域名访问
-  ```bash
-  ALLOWED_HOSTS=your-domain.com,www.your-domain.com
-  ```
-- **启用HTTPS**：生产环境必须使用HTTPS
-  ```bash
-  USE_SSL=True
-  ```
+- **启用HTTPS**：生产环境建议配置HTTPS
 
 #### 1.2 数据库安全
-- **修改默认数据库密码**：
-  ```bash
-  # 在.env文件中修改数据库连接URL
-  DATABASE_URL=postgres://postgres:your-strong-db-password@db:5432/wechat_survey
-  ```
-- **定期备份数据库**：
-  ```bash
-  # 手动备份示例
-  docker compose exec db pg_dump -U postgres wechat_survey > backup_$(date +%Y%m%d_%H%M%S).sql
-  ```
+- 使用强密码
+- 限制数据库用户的权限
+- 定期备份数据库
 
 ### 2. 性能优化
 
-#### 2.1 uWSGI配置优化
-- 根据服务器CPU核心数调整uwsgi.ini中的workers和threads
-  ```ini
-  # uwsgi.ini
-  workers = 4  # 建议设置为CPU核心数
-  threads = 2  # 每个worker的线程数
-  ```
+#### 2.1 Web服务器配置
+- 根据服务器配置调整Gunicorn/uWSGI的worker数量
+- 启用Nginx的gzip压缩
+- 配置适当的缓存策略
 
-#### 2.2 静态文件优化
-- 确保已执行`collectstatic`命令
-- 考虑使用CDN加速静态文件访问
-
-#### 2.3 数据库优化
-- 定期执行数据库优化
-  ```bash
-  docker compose run --rm web python manage.py dbshell
-  VACUUM ANALYZE;
-  ```
+#### 2.2 数据库优化
+- 定期优化数据库表
+- 配置适当的索引
 
 ### 3. 备份策略
 
-#### 3.1 自动备份脚本示例
+**自动备份脚本示例**：
 ```bash
 #!/bin/bash
 # 数据库自动备份脚本
 
 DATE=$(date +%Y%m%d_%H%M%S)
 BACKUP_DIR="/path/to/backups"
-CONTAINER_NAME="wechat_survey_db"
+DB_USER="wechat"
+DB_NAME="wechat_survey"
 
 # 创建备份目录
 mkdir -p $BACKUP_DIR
 
 # 执行备份
-docker compose exec $CONTAINER_NAME pg_dump -U postgres wechat_survey > $BACKUP_DIR/backup_$DATE.sql
+mysqldump -u $DB_USER -p$DB_PASSWORD $DB_NAME > $BACKUP_DIR/db_backup_$DATE.sql
 
 # 压缩备份文件
-gzip $BACKUP_DIR/backup_$DATE.sql
+gzip $BACKUP_DIR/db_backup_$DATE.sql
 
 # 保留最近7天的备份
-find $BACKUP_DIR -name "backup_*.sql.gz" -mtime +7 -delete
+find $BACKUP_DIR -name "db_backup_*.sql.gz" -mtime +7 -delete
 ```
-
-#### 3.2 备份频率建议
-- **数据库**：每天备份一次
-- **静态文件和媒体文件**：每周备份一次
-- **配置文件**：每次修改后备份
-
-### 4. 监控和日志管理
-
-#### 4.1 日志查看
-```bash
-# 查看所有服务日志
-./deploy.sh logs
-
-# 查看特定服务日志
-docker compose logs -f web
-```
-
-#### 4.2 日志持久化
-- 考虑使用ELK Stack或Loki等工具进行日志集中管理
-- 定期清理旧日志
-
-### 5. 升级和维护
-
-#### 5.1 应用升级流程
-```bash
-# 1. 拉取最新代码
-git pull
-
-# 2. 停止并移除旧容器
-./deploy.sh stop
-
-# 3. 构建新镜像并部署
-./deploy.sh --prod deploy
-
-# 4. 验证部署
-docker compose ps
-```
-
-#### 5.2 定期维护任务
-- 检查Docker镜像更新
-- 清理未使用的Docker资源
-  ```bash
-  docker system prune -f
-  ```
-- 更新依赖包
-  ```bash
-  pip install -r requirements.txt --upgrade
-  ```
-
-### 6. 生产环境一键部署
-
-#### 6.1 部署命令
-```bash
-# 生产环境一键部署
-./deploy.sh --prod deploy
-```
-
-#### 6.2 部署脚本特点
-- 自动检查Docker和Docker Compose安装
-- 验证生产环境配置安全性
-- 自动构建镜像
-- 执行数据库迁移
-- 收集静态文件
-- 启动所有服务
-- 显示服务状态和访问地址
-
-#### 6.3 生产环境注意事项
-- 部署前确保已备份数据
-- 部署过程中应用会短暂不可用
-- 部署后验证应用功能
 
 ## 常见问题和解决方案
 
-### 404错误
-- 检查nginx配置文件中的静态文件路径是否正确
-- 确保执行了`collectstatic`命令
-- 检查uwsgi服务是否正常运行
-
-### 502错误
-- 检查uwsgi服务是否正在运行
-- 检查nginx配置文件中的uwsgi地址是否正确
-- 查看uwsgi日志和nginx错误日志
+### 500错误
+- 检查应用日志：`journalctl -u wechat_survey -f`
+- 确保数据库连接正确
+- 检查静态文件是否正确收集
 
 ### 数据库连接错误
-- 检查数据库配置是否正确
-- 确保数据库服务正在运行
-- 检查数据库用户权限
+- 检查数据库服务是否运行
+- 检查数据库用户名和密码
+- 检查数据库名称是否正确
 
-### Nginx无法连接到应用
-- 确保所有应用都在同一个Docker网络中
-- 检查容器名和端口是否正确
-- 查看Nginx错误日志
+### 静态文件无法访问
+- 检查Nginx配置中的静态文件路径
+- 确保执行了`collectstatic`命令
+- 检查静态文件权限
 
 ## 注意事项
 
@@ -296,8 +354,8 @@ docker compose ps
    - 考虑使用HTTPS
 
 2. **性能优化**：
-   - 根据服务器配置调整uwsgi的`workers`和`threads`参数
-   - 启用nginx的gzip压缩
+   - 根据服务器配置调整Web服务器的worker数量
+   - 启用gzip压缩
    - 配置适当的缓存策略
 
 3. **数据备份**：
@@ -306,12 +364,7 @@ docker compose ps
 
 4. **日志管理**：
    - 定期清理日志文件
-   - 考虑使用日志管理工具（如ELK Stack）
-
-5. **版本更新**：
-   - 在更新代码前备份数据
-   - 更新后执行数据库迁移
-   - 重启服务
+   - 考虑使用日志管理工具
 
 ## 联系方式
 
@@ -321,4 +374,4 @@ docker compose ps
 
 ---
 
-部署文档更新时间：2025-12-12
+部署文档更新时间：2025-12-23

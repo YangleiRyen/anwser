@@ -153,17 +153,14 @@ standalone_nginx/
 - **survey**: 问卷应用目录，项目的核心应用，包含所有业务逻辑（模型、视图、序列化器等）
 - **wechat_survey**: 项目主目录，Django项目的主目录，包含项目配置、URL路由、WSGI入口等
 
-### 2. 配置文件
+### 4. 配置文件
 
 - **.gitignore**: Git忽略文件配置，指定Git版本控制中需要忽略的文件和目录，如虚拟环境、日志文件等
 - **requirements.txt**: Python依赖列表，列出项目所需的所有Python依赖包及其版本，用于安装依赖
-- **Dockerfile**: Docker镜像构建文件，定义Docker镜像的构建步骤，包括基础镜像、依赖安装、文件复制等
-- **docker compose.yml**: Docker Compose配置，定义多容器部署方案，包括web服务和db服务
 
 ### 3. 部署相关
 
-- **deploy.sh**: 部署脚本，简化Docker容器的管理和操作，提供deploy、stop、logs等命令
-- **DEPLOYMENT.md**: 部署文档，详细说明项目的Docker部署步骤、配置和常用命令
+- **DEPLOYMENT.md**: 部署文档，详细说明项目的传统部署步骤、配置和常用命令
 
 ### 4. Django管理文件
 
@@ -171,10 +168,10 @@ standalone_nginx/
 
 ## 部署说明
 
-### 一键部署（推荐）
+### 开发环境部署
 
-#### 1. 部署前准备
-- 确保已安装Docker和Docker Compose
+#### 1. 开发环境部署前准备
+- 确保已安装Python 3.9+
 - 克隆项目代码到本地
 - 配置环境变量（.env文件）
 
@@ -183,93 +180,75 @@ standalone_nginx/
   cp .env.example .env
   
   # 编辑.env文件，修改必要的环境变量
-  # 特别是SECRET_KEY，生产环境必须修改为强随机字符串
+  # 开发环境建议设置DEBUG=True
   ```
 
-#### 2. 执行一键部署
+#### 2. 执行开发环境部署
 ```bash
-# 赋予脚本执行权限
-chmod +x deploy.sh
+# 创建虚拟环境
+python3 -m venv venv
 
-# 执行一键部署
-./deploy.sh
+# 激活虚拟环境
+# Linux/macOS
+source venv/bin/activate
+# Windows
+# venv\Scripts\activate
+
+# 安装依赖
+pip install -r requirements.txt
+
+# 执行数据库迁移
+python manage.py migrate
+
+# 创建超级用户
+python manage.py createsuperuser
+
+# 启动开发服务器
+python manage.py runserver
 ```
 
 #### 3. 访问应用
-- 应用访问地址：http://localhost
-- 管理后台：http://localhost/admin
-
-#### 4. 常用命令
-```bash
-# 查看服务日志
-./deploy.sh logs
-
-# 停止服务
-./deploy.sh stop
-
-# 重启服务
-./deploy.sh restart
-
-# 创建超级用户
-docker compose run --rm web python manage.py createsuperuser
-```
+- 应用访问地址：http://localhost:8000
+- 管理后台：http://localhost:8000/admin
 
 ### 生产环境部署
 
-#### 1. 生产环境部署前准备
-- 确保已安装Docker和Docker Compose
-- 克隆项目代码到本地
-- 配置.env文件，特别注意：
-  - 修改SECRET_KEY为强随机字符串
-  - 确保DEBUG=False
-  - 根据实际情况配置ALLOWED_HOSTS
-  - 后续可根据需要配置USE_SSL=True启用HTTPS
+生产环境部署请参考`DEPLOYMENT.md`文件，该文件包含详细的：
+- 系统要求
+- 依赖安装
+- MySQL数据库配置
+- 环境变量配置
+- Web服务器配置（Gunicorn/uWSGI）
+- Nginx反向代理配置
+- 服务管理（Systemd）
 
-#### 2. 执行生产环境一键部署
+#### 生产环境部署特点
+- 支持MySQL数据库
+- 提供安全配置建议
+- 支持HTTPS配置
+- 提供备份策略建议
+- 提供性能优化建议
+
+### 常用命令
+
 ```bash
-# 赋予脚本执行权限
-chmod +x deploy.sh
+# 执行数据库迁移
+python manage.py migrate
 
-# 执行生产环境一键部署
-./deploy.sh --prod deploy
+# 创建超级用户
+python manage.py createsuperuser
+
+# 收集静态文件
+python manage.py collectstatic --noinput
+
+# 启动开发服务器
+python manage.py runserver
+
+# 运行测试
+python manage.py test
 ```
 
-#### 3. 生产环境部署特点
-- 自动检查生产环境配置，确保安全性
-- 使用production_settings.py配置文件
-- 自动收集静态文件
-- 执行数据库迁移
-- 启用服务自动重启策略
-- 提供生产环境注意事项提示
 
-#### 4. 生产环境常用命令
-```bash
-# 生产环境部署
-./deploy.sh --prod deploy
-
-# 生产环境重启服务
-./deploy.sh --prod restart
-
-# 查看生产环境日志
-./deploy.sh --prod logs
-```
-
-### 部署说明
-
-- 部署脚本会自动完成以下操作：
-  - 检查Docker和Docker Compose是否安装
-  - 构建Docker镜像
-  - 自动创建网络和卷
-  - 启动所有服务（web + db + nginx）
-  - 执行数据库迁移
-  - 显示服务状态和访问地址
-
-- 服务架构：
-  - **web**：Django应用，使用uwsgi socket模式
-  - **db**：PostgreSQL数据库
-  - **nginx**：反向代理，处理HTTP请求和静态文件服务
-
-- 所有服务通过Docker网络通信，无需手动配置网络和卷
 
 ### 开发环境设置
 

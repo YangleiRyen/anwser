@@ -10,11 +10,12 @@ DEBUG = False
 # 示例：ALLOWED_HOSTS = ['example.com', 'www.example.com']
 ALLOWED_HOSTS = os.environ.get('ALLOWED_HOSTS', '*').split(',')
 
-# 使用DATABASE_URL环境变量配置数据库（与docker-compose.yml匹配）
+# 使用DATABASE_URL环境变量配置数据库（MySQL）
 import dj_database_url
-database_url = os.environ.get('DATABASE_URL', 'postgres://postgres:postgres@db:5432/wechat_survey')
+# 默认使用MySQL数据库
+DATABASE_URL = os.environ.get('DATABASE_URL', 'mysql://root:password@localhost:3306/wechat_survey')
 DATABASES = {
-    'default': dj_database_url.parse(database_url, conn_max_age=600),
+    'default': dj_database_url.parse(DATABASE_URL, conn_max_age=600),
 }
 
 # 安全设置
