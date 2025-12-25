@@ -24,20 +24,19 @@ SECRET_KEY = env('SECRET_KEY', default='your-production-secret-key-change-this-t
 # ====================================
 
 # 生产环境使用MySQL数据库
-# 使用环境变量配置数据库连接
+# 使用django-environ的db()方法从环境变量获取数据库配置
+# 优先使用DATABASE_URL，其次使用DB_*环境变量
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.mysql',
-        'NAME': env('DB_NAME', default='wechat_survey'),
-        'USER': env('DB_USER', default='wechat_survey_user'),
-        'PASSWORD': env('DB_PASSWORD', default='your-strong-db-password'),
-        'HOST': env('DB_HOST', default='localhost'),
-        'PORT': env('DB_PORT', default='3306'),
-        'OPTIONS': {
-            'charset': 'utf8mb4',
-            'sql_mode': 'STRICT_TRANS_TABLES',
-        },
-    }
+    'default': env.db(
+        default='mysql://wechat_survey_user:your-strong-db-password@localhost:3306/wechat_survey',
+        engine='django.db.backends.mysql',
+        **{
+            'OPTIONS': {
+                'charset': 'utf8mb4',
+                'sql_mode': 'STRICT_TRANS_TABLES',
+            }
+        }
+    )
 }
 
 # ====================================

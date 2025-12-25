@@ -33,8 +33,9 @@ env = environ.Env(
     DB_PORT=(str, '3306'),
 )
 
-# 从.env文件加载环境变量
-environ.Env.read_env(os.path.join(Path(__file__).resolve().parent.parent, '.env'))
+# 从环境变量指定的.env文件加载配置，默认使用.env
+env_file = os.environ.get('ENV_FILE', '.env')
+environ.Env.read_env(os.path.join(Path(__file__).resolve().parent.parent, env_file))
 
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
