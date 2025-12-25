@@ -14,25 +14,25 @@ DEBUG = False
 
 # 生产环境必须指定具体的域名，不能使用通配符
 # 多个域名用列表形式配置
-ALLOWED_HOSTS = ['your-domain.com', 'www.your-domain.com']
+ALLOWED_HOSTS = env.list('ALLOWED_HOSTS', default=['your-domain.com', 'www.your-domain.com'])
 
 # 生产环境密钥，必须使用强随机字符串
-SECRET_KEY = 'your-production-secret-key-change-this-to-random-string'
+SECRET_KEY = env('SECRET_KEY', default='your-production-secret-key-change-this-to-random-string')
 
 # ====================================
 # 数据库配置（MySQL）
 # ====================================
 
 # 生产环境使用MySQL数据库
-# 直接配置数据库连接参数，不使用环境变量
+# 使用环境变量配置数据库连接
 DATABASES = {
     'default': {
         'ENGINE': 'django.db.backends.mysql',
-        'NAME': 'wechat_survey',
-        'USER': 'wechat_survey_user',
-        'PASSWORD': 'your-strong-db-password',
-        'HOST': 'localhost',
-        'PORT': '3306',
+        'NAME': env('DB_NAME', default='wechat_survey'),
+        'USER': env('DB_USER', default='wechat_survey_user'),
+        'PASSWORD': env('DB_PASSWORD', default='your-strong-db-password'),
+        'HOST': env('DB_HOST', default='localhost'),
+        'PORT': env('DB_PORT', default='3306'),
         'OPTIONS': {
             'charset': 'utf8mb4',
             'sql_mode': 'STRICT_TRANS_TABLES',
@@ -46,7 +46,7 @@ DATABASES = {
 
 # 生产环境SSL配置
 # 初始部署时可设置为False，后续配置SSL后改为True
-USE_SSL = False
+USE_SSL = env('USE_SSL', default=False)
 
 if USE_SSL:
     # HTTPS配置

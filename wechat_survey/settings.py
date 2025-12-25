@@ -13,6 +13,29 @@ https://docs.djangoproject.com/en/5.2/ref/settings/
 from pathlib import Path
 import os
 
+# 导入django-environ用于环境变量管理
+import environ
+
+# 初始化environ
+env = environ.Env(
+    DEBUG=(bool, True),
+    ALLOWED_HOSTS=(list, ['*']),
+    DATABASE_URL=(str, 'sqlite:///db.sqlite3'),
+    SECRET_KEY=(str, 'django-insecure-wa478o&xc3^6#_xo2c-h)sjyg%-0qtm#n(36jvsu+q=+)xr1b8'),
+    WECHAT_APP_ID=(str, ''),
+    WECHAT_APP_SECRET=(str, ''),
+    USE_SSL=(bool, False),
+    # MySQL数据库配置
+    DB_NAME=(str, 'wechat_survey'),
+    DB_USER=(str, 'wechat_survey_user'),
+    DB_PASSWORD=(str, 'your-strong-db-password'),
+    DB_HOST=(str, 'localhost'),
+    DB_PORT=(str, '3306'),
+)
+
+# 从.env文件加载环境变量
+environ.Env.read_env(os.path.join(Path(__file__).resolve().parent.parent, '.env'))
+
 # Build paths inside the project like this: BASE_DIR / 'subdir'.
 BASE_DIR = Path(__file__).resolve().parent.parent
 
@@ -21,14 +44,13 @@ BASE_DIR = Path(__file__).resolve().parent.parent
 # See https://docs.djangoproject.com/en/5.2/howto/deployment/checklist/
 
 # SECURITY WARNING: keep the secret key used in production secret!
-# 开发环境密钥，生产环境会被覆盖
-SECRET_KEY = 'django-insecure-wa478o&xc3^6#_xo2c-h)sjyg%-0qtm#n(36jvsu+q=+)xr1b8'
+SECRET_KEY = env('SECRET_KEY')
 
 # SECURITY WARNING: don't run with debug turned on in production!
-DEBUG = True
+DEBUG = env('DEBUG')
 
-# 开发环境允许所有主机访问
-ALLOWED_HOSTS = ['*']
+# 允许访问的主机列表
+ALLOWED_HOSTS = env('ALLOWED_HOSTS')
 
 
 # Application definition
@@ -77,12 +99,10 @@ WSGI_APPLICATION = 'wechat_survey.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# 开发环境使用SQLite数据库，简单易用
+# 使用环境变量配置数据库
+# 默认使用SQLite，生产环境使用MySQL
 DATABASES = {
-    'default': {
-        'ENGINE': 'django.db.backends.sqlite3',
-        'NAME': BASE_DIR / 'db.sqlite3',
-    }
+    'default': env.db(),
 }
 
 
@@ -114,10 +134,6 @@ TIME_ZONE = 'Asia/Shanghai'  # 修改为上海时间
 USE_I18N = True
 USE_TZ = True
 
-# Static files (CSS, JavaScript, Images)
-# https://docs.djangoproject.com/en/5.2/howto/static-files/
-
-
 # Default primary key field type
 # https://docs.djangoproject.com/en/5.2/ref/settings/#default-auto-field
 
@@ -129,9 +145,9 @@ pymysql.install_as_MySQLdb()
 
 # === 以下是微信问卷系统的额外配置 ===
 
-# 微信配置（开发环境可留空，生产环境会被覆盖）
-WECHAT_APP_ID = ''
-WECHAT_APP_SECRET = ''
+# 微信配置
+WECHAT_APP_ID = env('WECHAT_APP_ID')
+WECHAT_APP_SECRET = env('WECHAT_APP_SECRET')
 
 # 静态文件配置
 STATIC_URL = '/static/'
@@ -162,16 +178,24 @@ REST_FRAMEWORK = {
     ]
 }
 
-# 开发环境的安全配置
-if DEBUG:
-    SECURE_SSL_REDIRECT = False
-    CSRF_COOKIE_SECURE = False
-    SESSION_COOKIE_SECURE = False
-else:
-    # 生产环境的安全配置
+# SSL配置
+USE_SSL = env('USE_SSL')
+
+if USE_SSL:
+    # HTTPS配置
     SECURE_SSL_REDIRECT = True
     CSRF_COOKIE_SECURE = True
     SESSION_COOKIE_SECURE = True
     SECURE_HSTS_SECONDS = 31536000
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+    SECURE_HSTS_PRELOAD = True
+else:
+    # HTTP配置
+    SECURE_SSL_REDIRECT = False
+    CSRF_COOKIE_SECURE = False
+    SESSION_COOKIE_SECURE = False
+    SECURE_HSTS_SECONDS = 0
+    SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+    SECURE_HSTS_PRELOAD = False
 
 
