@@ -11,5 +11,8 @@ urllib3==2.5.0
 certifi==2025.11.12
 django-environ==0.11.2
 
+# Production Server
+uwsgi==2.0.26
+
 # MySQL Support
 pymysql==1.1.1
