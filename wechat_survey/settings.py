@@ -100,11 +100,39 @@ WSGI_APPLICATION = 'wechat_survey.wsgi.application'
 # Database
 # https://docs.djangoproject.com/en/5.2/ref/settings/#databases
 
-# 使用环境变量配置数据库
-# 默认使用SQLite，生产环境使用MySQL
+# 默认使用SQLite数据库（开发环境）
 DATABASES = {
-    'default': env.db(),
+    'default': {
+        'ENGINE': 'django.db.backends.sqlite3',
+        'NAME': BASE_DIR / 'db.sqlite3',
+    }
 }
+
+# MySQL数据库配置模板（生产环境使用）
+# 取消注释并修改以下配置，或使用DATABASE_URL环境变量
+"""
+DATABASES = {
+    'default': {
+        'ENGINE': 'django.db.backends.mysql',
+        'NAME': env('DB_NAME', default='wechat_survey'),
+        'USER': env('DB_USER', default='wechat_survey_user'),
+        'PASSWORD': env('DB_PASSWORD', default='your-strong-db-password'),
+        'HOST': env('DB_HOST', default='localhost'),
+        'PORT': env('DB_PORT', default='3306'),
+        'OPTIONS': {
+            'charset': 'utf8mb4',
+            'sql_mode': 'STRICT_TRANS_TABLES',
+        },
+    }
+}
+"""
+
+# 也可以使用DATABASE_URL环境变量（优先级最高）
+# 格式：mysql://user:password@host:port/dbname
+if env('DATABASE_URL', default=None):
+    DATABASES = {
+        'default': env.db(),
+    }
 
 
 # Password validation
@@ -179,24 +207,57 @@ REST_FRAMEWORK = {
     ]
 }
 
-# SSL配置
-USE_SSL = env('USE_SSL')
+# === 环境相关配置 ===
 
-if USE_SSL:
-    # HTTPS配置
-    SECURE_SSL_REDIRECT = True
-    CSRF_COOKIE_SECURE = True
-    SESSION_COOKIE_SECURE = True
-    SECURE_HSTS_SECONDS = 31536000
-    SECURE_HSTS_INCLUDE_SUBDOMAINS = True
-    SECURE_HSTS_PRELOAD = True
-else:
-    # HTTP配置
+# SSL配置
+USE_SSL = env('USE_SSL', default=False)
+
+# 根据DEBUG状态应用不同的安全配置
+if DEBUG:
+    # 开发环境安全配置
     SECURE_SSL_REDIRECT = False
     CSRF_COOKIE_SECURE = False
     SESSION_COOKIE_SECURE = False
     SECURE_HSTS_SECONDS = 0
     SECURE_HSTS_INCLUDE_SUBDOMAINS = False
     SECURE_HSTS_PRELOAD = False
+    
+    # 开发环境允许所有主机访问
+    ALLOWED_HOSTS = env('ALLOWED_HOSTS', default=['*'])
+else:
+    # 生产环境安全配置
+    # SSL配置
+    if USE_SSL:
+        SECURE_SSL_REDIRECT = True
+        CSRF_COOKIE_SECURE = True
+        SESSION_COOKIE_SECURE = True
+        SECURE_HSTS_SECONDS = 31536000
+        SECURE_HSTS_INCLUDE_SUBDOMAINS = True
+        SECURE_HSTS_PRELOAD = True
+        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'https')
+    else:
+        SECURE_SSL_REDIRECT = False
+        CSRF_COOKIE_SECURE = False
+        SESSION_COOKIE_SECURE = False
+        SECURE_HSTS_SECONDS = 0
+        SECURE_HSTS_INCLUDE_SUBDOMAINS = False
+        SECURE_HSTS_PRELOAD = False
+        SECURE_PROXY_SSL_HEADER = ('HTTP_X_FORWARDED_PROTO', 'http')
+    
+    # 生产环境额外安全配置
+    SECURE_CONTENT_TYPE_NOSNIFF = True  # 防止浏览器猜测内容类型
+    SECURE_BROWSER_XSS_FILTER = True  # 启用浏览器XSS过滤器
+    X_FRAME_OPTIONS = 'DENY'  # 防止点击劫持
+    
+    # 会话安全配置
+    SESSION_COOKIE_HTTPONLY = True  # 防止JavaScript访问会话cookie
+    SESSION_COOKIE_SAMESITE = 'Lax'  # 限制跨站点请求
+    
+    # CSRF安全配置
+    CSRF_COOKIE_HTTPONLY = True  # 防止JavaScript访问CSRF cookie
+    CSRF_COOKIE_SAMESITE = 'Lax'  # 限制跨站点请求
+    
+    # 生产环境必须指定具体的域名
+    ALLOWED_HOSTS = env('ALLOWED_HOSTS', default=['your-domain.com', 'www.your-domain.com'])
 
 

@@ -1,0 +1,38 @@
+# 微信问卷系统 systemd 服务配置文件
+# 用于在Linux系统上管理微信问卷系统的启动、停止和重启
+
+[Unit]
+Description=WeChat Survey System
+After=network.target mysql.service  # 如果使用MySQL数据库，确保在MySQL启动后启动
+Wants=network-online.target
+
+[Service]
+# 运行用户 - 请替换为实际的运行用户
+User=www-data
+# 用户组 - 请替换为实际的用户组
+Group=www-data
+
+# 工作目录 - 请替换为实际的项目路径
+WorkingDirectory=/path/to/your/project/anwser
+
+# 环境变量
+Environment=DJANGO_SETTINGS_MODULE=wechat_survey.settings
+Environment=ENV_FILE=.env.production
+
+# 启动命令 - 请替换为实际的uwsgi路径
+ExecStart=/path/to/your/venv/bin/uwsgi --ini uwsgi.ini
+
+# 重启策略
+Restart=always
+RestartSec=10
+
+# 日志配置
+StandardOutput=journal
+StandardError=journal
+SyslogIdentifier=wechat-survey
+
+# 资源限制
+LimitNOFILE=4096
+
+[Install]
+WantedBy=multi-user.target

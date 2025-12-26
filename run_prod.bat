@@ -10,7 +10,7 @@ echo   环境：生产环境
 echo =====================================
 
 :: 设置环境变量
-set DJANGO_SETTINGS_MODULE=wechat_survey.production_settings
+set DJANGO_SETTINGS_MODULE=wechat_survey.settings
 set ENV_FILE=.env.production
 
 :: 启动生产服务器

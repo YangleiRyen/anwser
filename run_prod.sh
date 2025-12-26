@@ -27,7 +27,7 @@ fi
 touch reload.txt
 
 # 设置环境变量
-export DJANGO_SETTINGS_MODULE=wechat_survey.production_settings
+export DJANGO_SETTINGS_MODULE=wechat_survey.settings
 export ENV_FILE=.env.production
 
 # 启动生产服务器
