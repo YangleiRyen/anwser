@@ -181,9 +181,14 @@ WECHAT_APP_SECRET = env('WECHAT_APP_SECRET')
 # 静态文件配置
 STATIC_URL = '/static/'
 STATIC_ROOT = os.path.join(BASE_DIR, 'staticfiles')
+# 开发环境静态文件搜索目录
+# 注意：这里只需要添加项目级别的静态目录
+# 应用下的 static 目录 Django 会自动发现
 STATICFILES_DIRS = [
-    os.path.join(BASE_DIR, 'static'),
+    # 如果你有项目级别的静态文件，才需要添加
+    # os.path.join(BASE_DIR, 'static'),
 ]
+
 
 # 媒体文件配置（如果需要上传文件）
 MEDIA_URL = '/media/'
