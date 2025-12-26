@@ -16,6 +16,8 @@ staticfiles/
 .env
 .env.local
 .env.*.local
+.env.production
+.env.*.production
 
 # 日志
 *.log
