@@ -1,0 +1,120 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>RPI关系占有欲指数计算器</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+        
+        body {
+            font-family: Arial, sans-serif;
+            background-color: #f5f5f5;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 800px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            text-align: center;
+            margin-bottom: 30px;
+            padding: 20px;
+            background-color: #fff;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+        }
+        
+        h1 {
+            color: #ff6b6b;
+            margin-bottom: 10px;
+        }
+        
+        .intro {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-bottom: 20px;
+        }
+        
+        .btn {
+            display: block;
+            width: 200px;
+            margin: 0 auto;
+            padding: 12px;
+            background-color: #ff6b6b;
+            color: white;
+            text-align: center;
+            text-decoration: none;
+            border-radius: 4px;
+            font-size: 16px;
+            transition: background-color 0.3s;
+        }
+        
+        .btn:hover {
+            background-color: #ee5a52;
+        }
+        
+        .features {
+            background-color: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+            margin-top: 20px;
+        }
+        
+        .features ul {
+            list-style-type: none;
+            margin-top: 10px;
+        }
+        
+        .features li {
+            padding: 8px 0;
+            padding-left: 20px;
+            position: relative;
+        }
+        
+        .features li:before {
+            content: "✓";
+            color: #4ecdc4;
+            font-weight: bold;
+            position: absolute;
+            left: 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>RPI关系占有欲指数计算器</h1>
+            <p>探索您在亲密关系中的占有欲水平，获得专业分析与建议</p>
+        </header>
+        
+        <div class="intro">
+            <h2>什么是RPI？</h2>
+            <p>RPI（Relationship Possessiveness Index）是一种衡量个人在亲密关系中占有欲程度的评估工具。通过科学的问卷设计，帮助您了解自己在关系中的行为模式和心理状态。</p>
+        </div>
+        
+        <a href="{% url 'rpi_calculator:rpi_auth' %}" class="btn">开始测试</a>
+        
+        <div class="features">
+            <h2>测试特点</h2>
+            <ul>
+                <li>科学的评估体系</li>
+                <li>个性化的分析报告</li>
+                <li>专业的改进建议</li>
+                <li>严格的隐私保护</li>
+            </ul>
+        </div>
+    </div>
+</body>
+</html>

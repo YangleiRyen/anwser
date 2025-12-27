@@ -65,6 +65,7 @@ INSTALLED_APPS = [
     'django.contrib.staticfiles',
     'rest_framework',
     'survey',
+    'rpi_calculator',
 ]
 
 MIDDLEWARE = [
@@ -82,7 +83,7 @@ ROOT_URLCONF = 'wechat_survey.urls'
 TEMPLATES = [
     {
         'BACKEND': 'django.template.backends.django.DjangoTemplates',
-        'DIRS': [BASE_DIR / 'templates'],
+        'DIRS': [],  # 移除根目录templates目录，所有模板都使用应用内的templates目录
         'APP_DIRS': True,
         'OPTIONS': {
             'context_processors': [
@@ -194,8 +195,7 @@ STATICFILES_DIRS = [
 MEDIA_URL = '/media/'
 MEDIA_ROOT = os.path.join(BASE_DIR, 'media')
 
-# 模板目录配置
-TEMPLATES[0]['DIRS'] = [os.path.join(BASE_DIR, 'templates')]
+
 
 # 会话配置（用于记录问卷状态）
 SESSION_COOKIE_AGE = 86400  # 24小时
